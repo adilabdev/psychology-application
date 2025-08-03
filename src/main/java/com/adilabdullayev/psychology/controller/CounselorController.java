@@ -1,4 +1,4 @@
-package com.adilabdullayev.psychology.contoller;
+package com.adilabdullayev.psychology.controller;
 
 import com.adilabdullayev.psychology.model.Counselor;
 import com.adilabdullayev.psychology.service.CounselorService;
