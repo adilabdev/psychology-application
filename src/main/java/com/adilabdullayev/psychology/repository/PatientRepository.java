@@ -10,5 +10,6 @@ import java.util.Optional;
 public interface PatientRepository extends JpaRepository<Patient, Long> {
     Optional<Patient> findByEmail(String email);
     Optional<Patient> findByPhone(String phone);
-    Optional<Patient> findByEmailOrPhone(String email, String phone);
+    Optional<Patient> findByEmailOrPhone(String email, String phone);   //to get all (deleted and undeleted)
+    Optional<Patient> findByEmailOrPhoneAndDeletedFalse(String email, String phone); //to get only undeleted
 }
