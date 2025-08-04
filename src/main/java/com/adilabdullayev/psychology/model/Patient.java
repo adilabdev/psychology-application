@@ -12,11 +12,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-@Where(clause = "deleted = false") // Soft delete filtrelemesi
-@Table(name = "patients", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "email"),
-        @UniqueConstraint(columnNames = "phone")
-})
+@Where(clause = "deleted = false") // Soft delete filtering
+@Table(name = "patients")
 public class Patient {
 
     @Id
@@ -36,22 +33,26 @@ public class Patient {
     private LocalDate birthDate;
 
     @NotBlank(message = "Cinsiyet boş bırakılamaz.")
-    private String gender;  // Kolon adı sorguda gender, otomatik olur
+    private String gender;
 
     @NotBlank(message = "Telefon numarası zorunludur.")
-    private String phone;  // Kolon adı phone, otomatik olur
+    private String phone;
 
     @NotBlank(message = "E-posta boş bırakılamaz.")
     @Email(message = "Geçerli bir e-posta adresi giriniz.")
-    private String email;  // Kolon adı email, otomatik olur
+    private String email;
 
     @Column(name = "user_note")
-    private String userNote;   // Kullanıcıdan gelen not (isteğe bağlı)
+    private String userNote;
 
     @Column(name = "admin_note")
-    private String adminNote;  // Danışmanın notu
+    private String adminNote;
 
-    private Boolean deleted = false;  // deleted da otomatik
+    private Boolean deleted = false;
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
