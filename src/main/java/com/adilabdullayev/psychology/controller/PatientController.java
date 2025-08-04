@@ -5,6 +5,7 @@ import com.adilabdullayev.psychology.service.PatientService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -34,26 +35,33 @@ public class PatientController {
 
     @PostMapping
     public ResponseEntity<?> createPatient(@Valid @RequestBody Patient patient) {
-        Patient created = patientService.addPatient(patient);
-        if (created == null) {
-            return ResponseEntity.status(400).body("Hasta oluşturulamadı.");
+        try {
+            Patient created = patientService.addPatient(patient);
+            return ResponseEntity.ok(created);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Hasta oluşturulamadı: " + ex.getMessage());
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Bir hata oluştu.");
         }
-        return ResponseEntity.ok(created);
     }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updatePatient(@PathVariable Long id, @Valid @RequestBody Patient updated) {
-        Patient updatedPatient = patientService.updatePatient(id, updated);
-        if (updatedPatient == null) {
-            return ResponseEntity.status(404).body("Güncellenecek hasta bulunamadı ya da işlem başarısız.");
+        try {
+            Patient updatedPatient = patientService.updatePatient(id, updated);
+            return ResponseEntity.ok(updatedPatient);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Bir hata oluştu.");
         }
-        return ResponseEntity.ok(updatedPatient);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> softDelete(@PathVariable Long id) {
         try {
-            patientService.softDelete(id);
+            patientService.softDeletePatient(id);
             return ResponseEntity.ok("Danışan başarıyla silindi.");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Hata: Danışan silinemedi. Sebep: " + e.getMessage());
