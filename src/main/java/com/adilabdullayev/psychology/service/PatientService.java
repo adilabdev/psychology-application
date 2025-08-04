@@ -2,14 +2,17 @@ package com.adilabdullayev.psychology.service;
 
 import com.adilabdullayev.psychology.model.Patient;
 import com.adilabdullayev.psychology.repository.PatientRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
+
 
 @Service
 public class PatientService {
-
+    @Autowired
     private final PatientRepository patientRepository;
 
     public PatientService(PatientRepository patientRepository) {
@@ -24,41 +27,78 @@ public class PatientService {
         return patientRepository.findAll();
     }
 
-    public Patient addPatient(Patient patient) {
-        if (patientRepository.findByEmail(patient.getEmail()).isPresent()
-                || patientRepository.findByPhone(patient.getPhone()).isPresent()) {
-            throw new RuntimeException("Bu e-posta veya telefon numarası zaten kayıtlı.");
+    public Patient addPatient(Patient newPatient) {
+        Optional<Patient> existingPatientOpt = patientRepository
+                .findByEmailOrPhoneAndDeletedFalse(newPatient.getEmail(), newPatient.getPhone());
+
+        // ceheck if there is deleted user
+        Optional<Patient> deletedPatientOpt = patientRepository
+                .findByEmailOrPhone(newPatient.getEmail(), newPatient.getPhone());
+
+        if (existingPatientOpt.isPresent()) {
+            Patient existingPatient = existingPatientOpt.get();
+
+            if (existingPatient.getDeleted()) {
+                // find if there is softdeleted and update
+                existingPatient.setDeleted(false);
+                existingPatient.setFirstName(newPatient.getFirstName());
+                existingPatient.setLastName(newPatient.getLastName());
+                existingPatient.setBirthDate(newPatient.getBirthDate());
+                existingPatient.setGender(newPatient.getGender());
+                existingPatient.setPhone(newPatient.getPhone());
+                existingPatient.setEmail(newPatient.getEmail());
+                existingPatient.setUserNote(newPatient.getUserNote());
+                existingPatient.setAdminNote(newPatient.getAdminNote());
+                existingPatient.setUpdatedAt(LocalDateTime.now());
+
+                return patientRepository.save(existingPatient);
+
+            } else {
+                // if there is active user throw exception
+                throw new IllegalArgumentException("Bu e-posta veya telefon zaten kayıtlı.");
+            }
         }
-        return patientRepository.save(patient);
+        // add new patient
+        newPatient.setDeleted(false);
+        newPatient.setCreatedAt(LocalDateTime.now());
+        newPatient.setUpdatedAt(LocalDateTime.now());
+        return patientRepository.save(newPatient);
     }
 
-    public Patient updatePatient(Long id, Patient updated) {
-        Patient patient = patientRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Danışan bulunamadı."));
+    public Patient updatePatient(Long id, Patient updatedPatient) {
+        Patient existingPatient = patientRepository.findById(id)
+                .filter(p -> !p.getDeleted())
+                .orElseThrow(() -> new RuntimeException("Danışan bulunamadı veya silinmiş."));
 
-        Optional<Patient> emailOrPhone = patientRepository.findByEmailOrPhone(
-                updated.getEmail(), updated.getPhone()
+        Optional<Patient> conflictPatientOpt = patientRepository.findByEmailOrPhone(
+                updatedPatient.getEmail(), updatedPatient.getPhone()
         );
 
-        if (emailOrPhone.isPresent() && !emailOrPhone.get().getId().equals(id)) {
+        if (conflictPatientOpt.isPresent() && !conflictPatientOpt.get().getId().equals(id)) {
             throw new RuntimeException("Bu e-posta veya telefon numarası başka bir danışana ait.");
         }
 
-        patient.setFirstName(updated.getFirstName());
-        patient.setLastName(updated.getLastName());
-        patient.setBirthDate(updated.getBirthDate());
-        patient.setGender(updated.getGender());
-        patient.setPhone(updated.getPhone());
-        patient.setEmail(updated.getEmail());
-        patient.setUserNote(updated.getUserNote());
+        existingPatient.setFirstName(updatedPatient.getFirstName());
+        existingPatient.setLastName(updatedPatient.getLastName());
+        existingPatient.setBirthDate(updatedPatient.getBirthDate());
+        existingPatient.setGender(updatedPatient.getGender());
+        existingPatient.setPhone(updatedPatient.getPhone());
+        existingPatient.setEmail(updatedPatient.getEmail());
+        existingPatient.setUserNote(updatedPatient.getUserNote());
+        existingPatient.setAdminNote(updatedPatient.getAdminNote());
+        existingPatient.setUpdatedAt(LocalDateTime.now());
 
-        return patientRepository.save(patient);
+        return patientRepository.save(existingPatient);
     }
 
-    public void softDelete(Long id) {
+    public void softDeletePatient(Long id) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Danışan bulunamadı."));
+
         patient.setDeleted(true);
+        patient.setUpdatedAt(LocalDateTime.now());
+
         patientRepository.save(patient);
     }
+
 }
