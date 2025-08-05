@@ -7,6 +7,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import java.util.Map;
+import java.util.HashMap;
+
+
 import java.util.List;
 
 @RestController
@@ -67,4 +72,14 @@ public class PatientController {
             return ResponseEntity.status(500).body("Hata: Danışan silinemedi. Sebep: " + e.getMessage());
         }
     }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error -> {
+            errors.put(error.getField(), error.getDefaultMessage());
+        });
+        return ResponseEntity.badRequest().body(errors);
+    }
+
 }
