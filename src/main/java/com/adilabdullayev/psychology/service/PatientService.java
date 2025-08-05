@@ -1,26 +1,27 @@
 package com.adilabdullayev.psychology.service;
 
 import com.adilabdullayev.psychology.model.Patient;
+import com.adilabdullayev.psychology.model.notes.UserCounselorNote;
 import com.adilabdullayev.psychology.repository.PatientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.time.LocalDateTime;
-
 
 @Service
 public class PatientService {
-    @Autowired
+
     private final PatientRepository patientRepository;
 
+    @Autowired
     public PatientService(PatientRepository patientRepository) {
         this.patientRepository = patientRepository;
     }
 
     public List<Patient> getAllActive() {
-        return patientRepository.findAll(); // @Where filtrelemesi çalışacak
+        return patientRepository.findAll(); // @Where anotasyonu filtreleyecek
     }
 
     public List<Patient> getAllPatients() {
@@ -31,7 +32,6 @@ public class PatientService {
         Optional<Patient> existingPatientOpt = patientRepository
                 .findByEmailOrPhoneAndDeletedFalse(newPatient.getEmail(), newPatient.getPhone());
 
-        // ceheck if there is deleted user
         Optional<Patient> deletedPatientOpt = patientRepository
                 .findByEmailOrPhone(newPatient.getEmail(), newPatient.getPhone());
 
@@ -47,21 +47,34 @@ public class PatientService {
                 existingPatient.setGender(newPatient.getGender());
                 existingPatient.setPhone(newPatient.getPhone());
                 existingPatient.setEmail(newPatient.getEmail());
-                existingPatient.setUserNote(newPatient.getUserNote());
-                existingPatient.setAdminNote(newPatient.getAdminNote());
                 existingPatient.setUpdatedAt(LocalDateTime.now());
 
-                return patientRepository.save(existingPatient);
+                // Add if there is new notes
+                if (newPatient.getNotes() != null) {
+                    for (UserCounselorNote note : newPatient.getNotes()) {
+                        note.setPatient(existingPatient);
+                    }
+                    existingPatient.getNotes().clear(); // Önceki notlar silinir (isteğe bağlı)
+                    existingPatient.getNotes().addAll(newPatient.getNotes());
+                }
 
+                return patientRepository.save(existingPatient);
             } else {
-                // if there is active user throw exception
                 throw new IllegalArgumentException("Bu e-posta veya telefon zaten kayıtlı.");
             }
         }
-        // add new patient
+
+        // Yeni kayıt
         newPatient.setDeleted(false);
         newPatient.setCreatedAt(LocalDateTime.now());
         newPatient.setUpdatedAt(LocalDateTime.now());
+
+        if (newPatient.getNotes() != null) {
+            for (UserCounselorNote note : newPatient.getNotes()) {
+                note.setPatient(newPatient);
+            }
+        }
+
         return patientRepository.save(newPatient);
     }
 
@@ -84,9 +97,16 @@ public class PatientService {
         existingPatient.setGender(updatedPatient.getGender());
         existingPatient.setPhone(updatedPatient.getPhone());
         existingPatient.setEmail(updatedPatient.getEmail());
-        existingPatient.setUserNote(updatedPatient.getUserNote());
-        existingPatient.setAdminNote(updatedPatient.getAdminNote());
         existingPatient.setUpdatedAt(LocalDateTime.now());
+
+        // set if there is new notes (if u want u can add new notes during update)
+        if (updatedPatient.getNotes() != null) {
+            for (UserCounselorNote note : updatedPatient.getNotes()) {
+                note.setPatient(existingPatient);
+                existingPatient.getNotes().add(note);
+            }
+        }
+
 
         return patientRepository.save(existingPatient);
     }
@@ -100,5 +120,4 @@ public class PatientService {
 
         patientRepository.save(patient);
     }
-
 }
