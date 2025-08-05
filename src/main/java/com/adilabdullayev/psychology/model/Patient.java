@@ -1,11 +1,16 @@
 package com.adilabdullayev.psychology.model;
 
+import com.adilabdullayev.psychology.model.notes.UserCounselorNote;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Where;
+import java.util.List;
+import java.util.ArrayList;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -42,11 +47,10 @@ public class Patient {
     @Email(message = "Geçerli bir e-posta adresi giriniz.")
     private String email;
 
-    @Column(name = "user_note")
-    private String userNote;
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<UserCounselorNote> notes = new ArrayList<>();
 
-    @Column(name = "admin_note")
-    private String adminNote;
 
     private Boolean deleted = false;
 
