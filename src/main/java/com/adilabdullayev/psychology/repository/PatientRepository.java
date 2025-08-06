@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface PatientRepository extends JpaRepository<Patient, Long> {
+public interface PatientRepository extends JpaRepository<Patient, Long>, PatientRepositoryCustom {
     Optional<Patient> findByEmail(String email);
     Optional<Patient> findByPhone(String phone);
     Optional<Patient> findByEmailOrPhone(String email, String phone);   //to get all (deleted and undeleted)
