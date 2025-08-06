@@ -3,6 +3,7 @@ package com.adilabdullayev.psychology.service;
 import com.adilabdullayev.psychology.model.Patient;
 import com.adilabdullayev.psychology.model.notes.UserCounselorNote;
 import com.adilabdullayev.psychology.repository.PatientRepository;
+import com.adilabdullayev.psychology.dto.Request.PatientFilterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -120,4 +121,10 @@ public class PatientService {
 
         patientRepository.save(patient);
     }
+
+    public List<Patient> filterPatients(PatientFilterRequest request) {
+        return patientRepository.filterPatients(request);
+    }
+
+
 }
