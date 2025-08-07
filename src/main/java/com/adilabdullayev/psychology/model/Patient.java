@@ -70,6 +70,9 @@ public class Patient {
         return Period.between(this.birthDate, LocalDate.now()).getYears();
     }
 
+    private Integer sessionCount;
+    private LocalDateTime lastSessionDate;
+
     private Boolean deleted = false;
 
     public Boolean getDeleted() {
