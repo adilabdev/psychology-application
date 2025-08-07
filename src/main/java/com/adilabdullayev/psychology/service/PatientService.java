@@ -4,12 +4,16 @@ import com.adilabdullayev.psychology.model.Patient;
 import com.adilabdullayev.psychology.model.notes.UserCounselorNote;
 import com.adilabdullayev.psychology.repository.PatientRepository;
 import com.adilabdullayev.psychology.dto.Request.PatientFilterRequest;
+import com.adilabdullayev.psychology.model.notes.PatientStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -69,7 +73,18 @@ public class PatientService {
             }
         }
 
-        // Yeni kayıt
+        // setting patient code
+        if (newPatient.getPatientCode() == null || newPatient.getPatientCode().isEmpty()) {
+            newPatient.setPatientCode(generatePatientCode());
+        }
+
+        // Setting status, yeni as a default value
+        if (newPatient.getStatus() == null) {
+            newPatient.setStatus(PatientStatus.YENI);
+        }
+
+
+        // Finally new guy comes out
         newPatient.setDeleted(false);
         newPatient.setCreatedAt(LocalDateTime.now());
         newPatient.setUpdatedAt(LocalDateTime.now());
@@ -102,6 +117,7 @@ public class PatientService {
         existingPatient.setGender(updatedPatient.getGender());
         existingPatient.setPhone(updatedPatient.getPhone());
         existingPatient.setEmail(updatedPatient.getEmail());
+        existingPatient.setStatus(updatedPatient.getStatus());
         existingPatient.setUpdatedAt(LocalDateTime.now());
 
         // set if there is new notes (if u want u can add new notes during update)
@@ -133,5 +149,25 @@ public class PatientService {
     public Page<Patient> getActivePatients(Pageable pageable) {
         return patientRepository.findAll(pageable); // Soft delete için @Where çalışır
         ///  http://localhost:8080/patients/paged?page=0&size=2&sort=createdAt,desc u can test it with that endpoint
+    }
+
+
+    // generating patient code
+    private static final Object patientCodeLock = new Object();
+
+    private String generatePatientCode() {
+        synchronized (patientCodeLock) {
+            String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+            String prefix = "PAT" + datePart;
+
+            int nextSequence = 1;
+            String newCode;
+
+            do {
+                newCode = String.format("%s-%04d", prefix, nextSequence++);
+            } while (patientRepository.existsByPatientCode(newCode)); // check if it's on db
+
+            return newCode;
+        }
     }
 }
