@@ -34,4 +34,16 @@ public class UserCounselorNoteController {
             @PathVariable UserCounselorNote.NoteType type) {
         return ResponseEntity.ok(noteService.getNotesByType(patientId, type));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<UserCounselorNote>> searchNotes(
+            @PathVariable Long patientId,
+            @RequestParam String keyword,
+            @RequestParam(required = false) UserCounselorNote.NoteType type) {
+
+        List<UserCounselorNote> notes = noteService.searchNotesByKeyword(patientId, keyword, type);
+        return ResponseEntity.ok(notes);
+    }
+
+
 }
