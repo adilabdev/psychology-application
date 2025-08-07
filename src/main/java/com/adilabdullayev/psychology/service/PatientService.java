@@ -7,6 +7,10 @@ import com.adilabdullayev.psychology.dto.Request.PatientFilterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -126,5 +130,8 @@ public class PatientService {
         return patientRepository.filterPatients(request);
     }
 
-
+    public Page<Patient> getActivePatients(Pageable pageable) {
+        return patientRepository.findAll(pageable); // Soft delete için @Where çalışır
+        ///  http://localhost:8080/patients/paged?page=0&size=2&sort=createdAt,desc u can test it with that endpoint
+    }
 }
