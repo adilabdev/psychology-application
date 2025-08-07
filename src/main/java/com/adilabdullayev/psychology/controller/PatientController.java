@@ -2,10 +2,14 @@ package com.adilabdullayev.psychology.controller;
 
 import com.adilabdullayev.psychology.model.Patient;
 import com.adilabdullayev.psychology.service.PatientService;
+import com.adilabdullayev.psychology.dto.Request.PatientFilterRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.BindingResult;
+import java.util.stream.Collectors;  // Collectors için
+import org.springframework.context.support.DefaultMessageSourceResolvable;  // DefaultMessageSourceResolvable için
 
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import java.util.Map;
@@ -72,6 +76,37 @@ public class PatientController {
             return ResponseEntity.status(500).body("Hata: Danışan silinemedi. Sebep: " + e.getMessage());
         }
     }
+
+    @PostMapping("/filter")
+    public ResponseEntity<?> filterPatients(@Valid @RequestBody PatientFilterRequest filterRequest) {
+
+        boolean hasValidField =
+                (filterRequest.getFirstName() != null && !filterRequest.getFirstName().isBlank()) ||
+                        (filterRequest.getLastName() != null && !filterRequest.getLastName().isBlank()) ||
+                        (filterRequest.getGender() != null && !filterRequest.getGender().isBlank()) ||
+                        (filterRequest.getBirthYear() != null) ||
+                        (filterRequest.getCreatedAfter() != null) ||
+                        (filterRequest.getUpdatedBefore() != null) ||
+                        (filterRequest.getEmail() != null && !filterRequest.getEmail().isBlank()) ||   // ✅ email kontrolü
+                        (filterRequest.getPhone() != null && !filterRequest.getPhone().isBlank());     // ✅ phone kontrolü
+
+        if (!hasValidField) {
+            return ResponseEntity.badRequest().body("En az bir geçerli filtre alanı girilmelidir.");
+        }
+
+        List<Patient> filtered = patientService.filterPatients(filterRequest);
+        return ResponseEntity.ok(filtered);
+    }
+
+
+
+    @ExceptionHandler({com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException.class})
+    public ResponseEntity<?> handleUnknownField(com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException ex) {
+        String fieldName = ex.getPropertyName();
+        String message = "Geçersiz alan: " + fieldName;
+        return ResponseEntity.badRequest().body(message);
+    }
+
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
