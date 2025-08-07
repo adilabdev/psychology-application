@@ -11,6 +11,13 @@ import org.springframework.validation.BindingResult;
 import java.util.stream.Collectors;  // Collectors için
 import org.springframework.context.support.DefaultMessageSourceResolvable;  // DefaultMessageSourceResolvable için
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
+
+
+
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import java.util.Map;
 import java.util.HashMap;
@@ -105,6 +112,12 @@ public class PatientController {
         String fieldName = ex.getPropertyName();
         String message = "Geçersiz alan: " + fieldName;
         return ResponseEntity.badRequest().body(message);
+    }
+
+    @GetMapping("/paged")
+    public ResponseEntity<?> getAllPatientsPaged(Pageable pageable) {
+        Page<Patient> patients = patientService.getActivePatients(pageable);
+        return ResponseEntity.ok(patients);
     }
 
 
