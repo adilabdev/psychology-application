@@ -34,4 +34,16 @@ public class UserCounselorNoteService {
     public List<UserCounselorNote> getNotesByType(Long patientId, UserCounselorNote.NoteType type) {
         return noteRepository.findByPatientIdAndType(patientId, type);
     }
+
+    public List<UserCounselorNote> searchNotesByKeyword(Long patientId, String keyword, UserCounselorNote.NoteType type) {
+        if (type == null) {
+            return noteRepository.findByPatientIdAndContentContainingIgnoreCase(patientId, keyword);
+        } else {
+            return noteRepository.findByPatientIdAndTypeAndContentContainingIgnoreCase(patientId, type, keyword);
+        }
+    }
+    // GET http://localhost:8080/patients/{patientId}/notes/search?keyword=depresyon url for testing both counselor and patient
+    // GET /patients/{patientId}/notes/search?keyword=depresyon&type=USER only patient (http://localhost:8080/patients/4/notes/search?keyword=depresyon&type=USER)
+    // GET /patients/{patientId}/notes/search?keyword=depresyon&type=COUNSELOR only counselor(http://localhost:8080/patients/4/notes/search?keyword=depresyon&type=COUNSELOR)
+
 }
