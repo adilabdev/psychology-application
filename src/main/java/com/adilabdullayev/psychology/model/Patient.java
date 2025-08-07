@@ -1,7 +1,7 @@
 package com.adilabdullayev.psychology.model;
 
 import com.adilabdullayev.psychology.model.notes.UserCounselorNote;
-
+import com.adilabdullayev.psychology.model.notes.PatientStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 
 @Entity
 @Data
@@ -51,6 +52,23 @@ public class Patient {
     @JsonManagedReference
     private List<UserCounselorNote> notes = new ArrayList<>();
 
+    // Patient Code / File No
+    @Column(name = "patient_code", unique = true)
+    private String patientCode;
+
+    // Patient Status (Enum)
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private PatientStatus status;
+
+    // Automatic age calculating
+    @Transient
+    public int getAge() {
+        if (this.birthDate == null) {
+            return 0;
+        }
+        return Period.between(this.birthDate, LocalDate.now()).getYears();
+    }
 
     private Boolean deleted = false;
 
