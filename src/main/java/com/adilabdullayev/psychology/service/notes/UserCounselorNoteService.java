@@ -1,9 +1,10 @@
 package com.adilabdullayev.psychology.service.notes;
 
-import com.adilabdullayev.psychology.model.Patient;
+import com.adilabdullayev.psychology.model.patient.Patient;
 import com.adilabdullayev.psychology.model.notes.UserCounselorNote;
-import com.adilabdullayev.psychology.repository.PatientRepository;
+import com.adilabdullayev.psychology.repository.patient.PatientRepository;
 import com.adilabdullayev.psychology.repository.notes.UserCounselorNoteRepository;
+import com.adilabdullayev.psychology.model.notes.NoteOwnerType;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class UserCounselorNoteService {
         this.patientRepository = patientRepository;
     }
 
+    // adds a note for a client by checking the client
     public UserCounselorNote addNote(Long patientId, UserCounselorNote note) {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new RuntimeException("Hasta bulunamadı"));
@@ -27,19 +29,22 @@ public class UserCounselorNoteService {
         return noteRepository.save(note);
     }
 
+    // brings all notes by specific client
     public List<UserCounselorNote> getAllNotes(Long patientId) {
         return noteRepository.findByPatientId(patientId);
     }
 
-    public List<UserCounselorNote> getNotesByType(Long patientId, UserCounselorNote.NoteType type) {
-        return noteRepository.findByPatientIdAndType(patientId, type);
+    // brings notes by ownership type fpr a specific client
+    public List<UserCounselorNote> getNotesByOwnerType(Long patientId, NoteOwnerType noteOwnerType) {
+        return noteRepository.findByPatientIdAndNoteOwnerType(patientId, noteOwnerType);
     }
 
-    public List<UserCounselorNote> searchNotesByKeyword(Long patientId, String keyword, UserCounselorNote.NoteType type) {
-        if (type == null) {
+    // makes search by a keyword at client notes, u can do ownership(NoteOwnerType) gilter as optional choice
+    public List<UserCounselorNote> searchNotesByKeyword(Long patientId, String keyword, NoteOwnerType noteOwnerType) {
+        if (noteOwnerType == null) {
             return noteRepository.findByPatientIdAndContentContainingIgnoreCase(patientId, keyword);
         } else {
-            return noteRepository.findByPatientIdAndTypeAndContentContainingIgnoreCase(patientId, type, keyword);
+            return noteRepository.findByPatientIdAndNoteOwnerTypeAndContentContainingIgnoreCase(patientId, noteOwnerType, keyword);
         }
     }
     // GET http://localhost:8080/patients/{patientId}/notes/search?keyword=depresyon url for testing both counselor and patient
