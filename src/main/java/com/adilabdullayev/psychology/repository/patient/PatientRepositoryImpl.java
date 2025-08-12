@@ -1,4 +1,4 @@
-package com.adilabdullayev.psychology.repository;
+package com.adilabdullayev.psychology.repository.patient;
 
 import com.adilabdullayev.psychology.dto.Request.PatientFilterRequest;
 import com.adilabdullayev.psychology.model.patient.Patient;
