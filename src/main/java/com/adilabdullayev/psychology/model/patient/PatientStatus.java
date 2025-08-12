@@ -1,4 +1,4 @@
-package com.adilabdullayev.psychology.model.notes;
+package com.adilabdullayev.psychology.model.patient;
 
 public enum PatientStatus {
     AKTIF,

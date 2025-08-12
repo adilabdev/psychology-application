@@ -1,9 +1,8 @@
-package com.adilabdullayev.psychology.repository;
+package com.adilabdullayev.psychology.repository.patient;
 
-import com.adilabdullayev.psychology.model.Patient;
+import com.adilabdullayev.psychology.model.patient.Patient;
 import com.adilabdullayev.psychology.dto.Request.PatientFilterRequest;
 
-import java.time.LocalDate;
 import java.util.List;
 
 public interface PatientRepositoryCustom {

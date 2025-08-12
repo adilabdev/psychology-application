@@ -1,7 +1,7 @@
 package com.adilabdullayev.psychology.repository;
 
 import com.adilabdullayev.psychology.dto.Request.PatientFilterRequest;
-import com.adilabdullayev.psychology.model.Patient;
+import com.adilabdullayev.psychology.model.patient.Patient;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.*;
