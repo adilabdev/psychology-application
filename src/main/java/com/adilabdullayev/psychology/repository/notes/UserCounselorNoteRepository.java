@@ -1,17 +1,22 @@
 package com.adilabdullayev.psychology.repository.notes;
 
 import com.adilabdullayev.psychology.model.notes.UserCounselorNote;
+import com.adilabdullayev.psychology.model.notes.NoteOwnerType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface UserCounselorNoteRepository extends JpaRepository<UserCounselorNote, Long> {
+
+    // brings notes for specific client
     List<UserCounselorNote> findByPatientId(Long patientId);
 
-    List<UserCounselorNote> findByPatientIdAndType(Long patientId, UserCounselorNote.NoteType type);
+    // filters notes for a specific client by ownership type
+    List<UserCounselorNote> findByPatientIdAndNoteOwnerType(Long patientId, NoteOwnerType noteOwnerType);
 
-    // Intensive Search word based
+    // case-intensive search on the notes keyword based
     List<UserCounselorNote> findByPatientIdAndContentContainingIgnoreCase(Long patientId, String keyword);
 
-    List<UserCounselorNote> findByPatientIdAndTypeAndContentContainingIgnoreCase(Long patientId, UserCounselorNote.NoteType type, String keyword);
+    // filters notes by each ownership type and keyword
+    List<UserCounselorNote> findByPatientIdAndNoteOwnerTypeAndContentContainingIgnoreCase(Long patientId, NoteOwnerType noteOwnerType, String keyword);
 
 }
