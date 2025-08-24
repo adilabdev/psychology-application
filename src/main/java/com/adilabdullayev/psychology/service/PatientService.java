@@ -11,6 +11,7 @@ import com.adilabdullayev.psychology.model.patient.PatientStatus;
 import com.adilabdullayev.psychology.model.notes.ArchivedUserCounselorNote;
 import com.adilabdullayev.psychology.model.notes.NoteOwnerType;
 import com.adilabdullayev.psychology.repository.notes.ArchivedUserCounselorNoteRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.time.LocalDateTime;
@@ -78,6 +80,17 @@ public class PatientService {
         return noteRepository.findByPatientId(patientId);
     }
 
+    // basic search for email and name
+    public List<Patient> searchPatients(String keyword) {
+        // Repository’de isimle arama metodu yoksa ekleyelim
+        return patientRepository.findByEmailContainingIgnoreCaseOrFirstNameContainingIgnoreCase(keyword, keyword);
+    }
+
+    // search with pagination support
+    public Page<Patient> searchPatients(String keyword, Pageable pageable) {
+        return patientRepository.findByEmailContainingIgnoreCaseOrFirstNameContainingIgnoreCase(keyword, keyword, pageable);
+    }
+
     /*
     * addpatient method
     * - checks by is email and phone
@@ -87,7 +100,7 @@ public class PatientService {
     * - associate patient notes
     * */
     @Transactional
-    public Patient addPatient(Patient newPatient) {
+    public Patient addPatient(@Valid Patient newPatient) {
         logger.info("addPatient çağrıldı. Email: {}, Telefon: {}", newPatient.getEmail(), newPatient.getPhone());
 
         // checking if there is a patient with same email address or phone number
