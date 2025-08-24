@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +28,12 @@ public interface PatientRepository extends JpaRepository<Patient, Long>, Patient
 
     // finds an active patient by id
     Optional<Patient> findByEmailOrPhoneAndDeletedFalse(String email, String phone); //to get only undeleted
+
+    // finds by name
+    List<Patient> findByEmailContainingIgnoreCaseOrFirstNameContainingIgnoreCase(String email, String firstName);
+
+    // finds by email or name
+    Page<Patient> findByEmailContainingIgnoreCaseOrFirstNameContainingIgnoreCase(String email, String firstName, Pageable pageable);
 
     // returns a paged list of active clients
     Optional<Patient> findByIdAndDeletedFalse(Long id);
