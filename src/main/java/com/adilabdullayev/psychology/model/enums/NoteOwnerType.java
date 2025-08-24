@@ -1,4 +1,4 @@
-package com.adilabdullayev.psychology.model.notes;
+package com.adilabdullayev.psychology.model.enums;
 
 public enum NoteOwnerType {
     PATIENT,
