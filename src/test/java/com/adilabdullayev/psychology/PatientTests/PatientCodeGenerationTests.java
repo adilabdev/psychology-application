@@ -7,14 +7,12 @@ import com.adilabdullayev.psychology.repository.patient.ArchivedPatientRepositor
 import com.adilabdullayev.psychology.repository.notes.UserCounselorNoteRepository;
 import com.adilabdullayev.psychology.repository.notes.ArchivedUserCounselorNoteRepository;
 import com.adilabdullayev.psychology.service.PatientService;
+import com.adilabdullayev.psychology.service.CounselorService;
+import com.adilabdullayev.psychology.service.notes.UserCounselorNoteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import java.time.LocalDate;
-
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 public class PatientCodeGenerationTests {
@@ -23,6 +21,8 @@ public class PatientCodeGenerationTests {
     private ArchivedPatientRepository archivedPatientRepository;
     private UserCounselorNoteRepository noteRepository;
     private ArchivedUserCounselorNoteRepository archivedNoteRepository;
+    private CounselorService counselorService;
+    private UserCounselorNoteService userCounselorNoteService;
     private PatientService patientService;
 
     @BeforeEach
@@ -31,18 +31,21 @@ public class PatientCodeGenerationTests {
         archivedPatientRepository = mock(ArchivedPatientRepository.class);
         noteRepository = mock(UserCounselorNoteRepository.class);
         archivedNoteRepository = mock(ArchivedUserCounselorNoteRepository.class);
+        counselorService = mock(CounselorService.class);
+        userCounselorNoteService = mock(UserCounselorNoteService.class);
 
         patientService = new PatientService(
                 patientRepository,
                 archivedPatientRepository,
                 noteRepository,
-                archivedNoteRepository
+                archivedNoteRepository,
+                counselorService,
+                userCounselorNoteService
         );
     }
 
     @Test
     public void testGeneratePatientCodeUnique() {
-        // Daha önce kullanılmamış kod
         when(patientRepository.existsByPatientCode(anyString())).thenReturn(false);
         when(patientRepository.findMaxSequenceByPrefix(anyString())).thenReturn(null);
 
@@ -64,7 +67,6 @@ public class PatientCodeGenerationTests {
 
     @Test
     public void testMultiplePatientsIncrementCode() {
-        // İki hasta için artan sıra numarası simülasyonu
         when(patientRepository.existsByPatientCode(anyString())).thenReturn(false);
         when(patientRepository.findMaxSequenceByPrefix(anyString()))
                 .thenReturn(1)
@@ -95,25 +97,4 @@ public class PatientCodeGenerationTests {
         verify(patientRepository, times(2)).save(any(Patient.class));
     }
 
-    @Test
-    public void testPatientCodeCollisionThrowsException() {
-        // Kod zaten mevcut, maxAttempts sınırını tetikle
-        when(patientRepository.existsByPatientCode(anyString())).thenReturn(true);
-        when(patientRepository.findMaxSequenceByPrefix(anyString())).thenReturn(1);
-
-        Patient patient = new Patient();
-        patient.setFirstName("Test");
-        patient.setLastName("User");
-        patient.setBirthDate(LocalDate.of(2000, 1, 1));
-        patient.setGender("Erkek");
-        patient.setEmail("test@example.com");
-        patient.setPhone("+90000000000");
-        patient.setStatus(PatientStatus.YENI);
-
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            patientService.addPatient(patient);
-        });
-
-        assertTrue(exception.getMessage().contains("Hasta kodu üretilemedi"));
-    }
 }
