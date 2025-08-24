@@ -7,6 +7,7 @@ import com.adilabdullayev.psychology.repository.patient.ArchivedPatientRepositor
 import com.adilabdullayev.psychology.repository.notes.UserCounselorNoteRepository;
 import com.adilabdullayev.psychology.repository.notes.ArchivedUserCounselorNoteRepository;
 import com.adilabdullayev.psychology.service.PatientService;
+import com.adilabdullayev.psychology.service.CounselorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +23,7 @@ public class PatientDeletionTests {
     private ArchivedPatientRepository archivedPatientRepository;
     private UserCounselorNoteRepository noteRepository;
     private ArchivedUserCounselorNoteRepository archivedNoteRepository;
+    private CounselorService counselorService;
     private PatientService patientService;
 
     @BeforeEach
@@ -30,64 +32,75 @@ public class PatientDeletionTests {
         archivedPatientRepository = mock(ArchivedPatientRepository.class);
         noteRepository = mock(UserCounselorNoteRepository.class);
         archivedNoteRepository = mock(ArchivedUserCounselorNoteRepository.class);
+        counselorService = mock(CounselorService.class);  // Mock CounselorService
 
+        // Correct constructor for PatientService with all required dependencies
         patientService = new PatientService(
                 patientRepository,
                 archivedPatientRepository,
                 noteRepository,
-                archivedNoteRepository
+                archivedNoteRepository,
+                counselorService,  // Pass counselorService
+                null   // noteService set to null for now
         );
     }
 
     @Test
     public void testSoftDeletePatientSuccess() {
+        // Test to ensure soft delete works correctly
         Patient patient = new Patient();
         patient.setId(1L);
         patient.setFirstName("Ahmet");
         patient.setLastName("Yılmaz");
-        patient.setBirthDate(LocalDate.of(1995,7,20));
+        patient.setBirthDate(LocalDate.of(1995, 7, 20));
         patient.setGender("Erkek");
         patient.setEmail("ahmet@example.com");
         patient.setPhone("+90597433533");
         patient.setStatus(PatientStatus.YENI);
 
+        // Simulate finding an active patient
         when(patientRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(patient));
         when(archivedPatientRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
 
+        // Soft delete patient
         assertDoesNotThrow(() -> {
             patientService.softDeletePatient(1L, "Test sebep", "Tester", "127.0.0.1");
         });
 
-        // patientRepository.delete çağrıldı mı?
+        // Verify delete and archive actions
         verify(patientRepository, times(1)).delete(patient);
-        // archivedPatientRepository.save çağrıldı mı?
         verify(archivedPatientRepository, times(1)).save(any());
     }
 
     @Test
     public void testSoftDeletePatientNotFound() {
+        // Test when patient does not exist
         when(patientRepository.findByIdAndDeletedFalse(999L)).thenReturn(Optional.empty());
 
+        // Try deleting a non-existent patient
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
             patientService.softDeletePatient(999L, "Sebep", "Tester", "127.0.0.1");
         });
 
+        // Assert exception is thrown with correct message
         assertTrue(ex.getMessage().contains("Hasta bulunamadı"));
     }
 
     @Test
     public void testSoftDeletedPatientNotReturned() {
-        // deleted = the patient is set as an deleted true
+        // Test to ensure soft deleted patients are not returned
         Patient patient = new Patient();
         patient.setId(2L);
-        patient.setDeleted(true);
+        patient.setDeleted(true); // Mark the patient as deleted
 
-        when(patientRepository.findByIdAndDeletedFalse(2L)).thenReturn(Optional.empty());
+        when(patientRepository.findByIdAndDeletedFalse(2L)).thenReturn(Optional.empty()); // Should return empty since the patient is deleted
 
+        // Try retrieving the soft deleted patient
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
             patientService.findById(2L);
         });
 
+        // Assert exception is thrown with correct message
         assertTrue(ex.getMessage().contains("Patient not found"));
     }
 }
