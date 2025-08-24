@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface PatientRepositoryCustom {
     List<Patient> filterPatients(PatientFilterRequest filter);
+    List<Patient> searchPatients(String keyword);
 }
