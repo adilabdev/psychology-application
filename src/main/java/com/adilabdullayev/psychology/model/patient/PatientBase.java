@@ -35,6 +35,7 @@ public abstract class PatientBase extends BaseEntity {
     // birth date - patient's age 'll be calculate, must
     @NotNull(message = "Doğum tarihi zorunludur.")
     @Column(name = "birth_date", nullable = false)
+    @Past(message = "Doğum tarihi geçmiş bir tarih olmalıdır.")
     private LocalDate birthDate;
 
     // gender - must
@@ -44,8 +45,10 @@ public abstract class PatientBase extends BaseEntity {
 
     // phone number - must
     @NotBlank(message = "Telefon numarası zorunludur.")
+    @Pattern(regexp = "^\\+\\d{10,15}$", message = "Geçerli bir telefon numarası giriniz.")
     @Column(nullable = false)
     private String phone;
+
 
     // e-post  - in validated format, must
     @NotBlank(message = "E-posta boş bırakılamaz.")
