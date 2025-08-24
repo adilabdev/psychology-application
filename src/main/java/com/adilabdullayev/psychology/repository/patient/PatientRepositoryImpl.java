@@ -4,6 +4,7 @@ import com.adilabdullayev.psychology.dto.Request.PatientFilterRequest;
 import com.adilabdullayev.psychology.model.patient.Patient;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
 import org.springframework.stereotype.Repository;
 
@@ -11,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-public class PatientRepositoryImpl implements PatientRepositoryCustom {
+public abstract class PatientRepositoryImpl implements PatientRepositoryCustom {
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -62,6 +63,8 @@ public class PatientRepositoryImpl implements PatientRepositoryCustom {
         }
 
         query.where(predicates.toArray(new Predicate[0]));
+
+        TypedQuery<Patient> typedQuery = entityManager.createQuery(query);
 
         return entityManager.createQuery(query).getResultList();
     }
