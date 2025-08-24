@@ -1,12 +1,14 @@
 package com.adilabdullayev.psychology.service.notes;
 
+import com.adilabdullayev.psychology.model.enums.NoteType;
 import com.adilabdullayev.psychology.model.patient.Patient;
 import com.adilabdullayev.psychology.model.notes.UserCounselorNote;
 import com.adilabdullayev.psychology.repository.patient.PatientRepository;
 import com.adilabdullayev.psychology.repository.notes.UserCounselorNoteRepository;
-import com.adilabdullayev.psychology.model.notes.NoteOwnerType;
+import com.adilabdullayev.psychology.model.enums.NoteOwnerType;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -47,8 +49,34 @@ public class UserCounselorNoteService {
             return noteRepository.findByPatientIdAndNoteOwnerTypeAndContentContainingIgnoreCase(patientId, noteOwnerType, keyword);
         }
     }
+
+    // filters notes by type
+    public List<UserCounselorNote> getNotesByType(NoteType noteType) {
+        return noteRepository.findByNoteType(noteType);
+    }
+
+    // brings notes visible to patient
+    public List<UserCounselorNote> getVisibleNotes() {
+        return noteRepository.findByIsVisibleToPatientTrue();
+    }
+
+    // brings soft-deleted notes
+    public List<UserCounselorNote> getDeletedNotes() {
+        return noteRepository.findByDeletedAtIsNotNull();
+    }
+
+    // brings notes created after a specific date
+    public List<UserCounselorNote> getNotesCreatedAfter(LocalDateTime date) {
+        return noteRepository.findByCreatedAtAfter(date);
+    }
+
+    // filters notes by type and visibility
+    public List<UserCounselorNote> getNotesByTypeAndVisibility(NoteType noteType, boolean visible) {
+        return noteRepository.findByNoteTypeAndIsVisibleToPatient(noteType, visible);
+    }
+
     // GET http://localhost:8080/patients/{patientId}/notes/search?keyword=depresyon url for testing both counselor and patient
     // GET /patients/{patientId}/notes/search?keyword=depresyon&type=USER only patient (http://localhost:8080/patients/4/notes/search?keyword=depresyon&type=USER)
     // GET /patients/{patientId}/notes/search?keyword=depresyon&type=COUNSELOR only counselor(http://localhost:8080/patients/4/notes/search?keyword=depresyon&type=COUNSELOR)
-
 }
+
