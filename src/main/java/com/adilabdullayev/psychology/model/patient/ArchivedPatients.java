@@ -3,13 +3,17 @@ package com.adilabdullayev.psychology.model.patient;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import com.adilabdullayev.psychology.model.BaseEntity;
+import com.adilabdullayev.psychology.model.enums.Gender;
+import com.adilabdullayev.psychology.model.enums.PatientStatus;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 @Data
 @Table(name = "archived_patients")
-public class ArchivedPatients {
+public class ArchivedPatients extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,11 +27,16 @@ public class ArchivedPatients {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
+    @Column(name = "middle_name", nullable = true)
+    private String middleName;
+
     @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "gender", nullable = false)
-    private String gender;
+    private Gender gender;
+
 
     @Column(nullable = false)
     private String phone;
@@ -39,8 +48,9 @@ public class ArchivedPatients {
     private String patientCode;
 
     // enum can be hold as toString() that's why i chose string type hehe
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private String status; // Enum toString() olarak string saklanırdı, string alan olarak tutulabilir
+    private PatientStatus status;
 
     @Column(name = "session_count")
     private Integer sessionCount;
@@ -62,15 +72,9 @@ public class ArchivedPatients {
     @Column(name = "ip_address")
     private String ipAddress;
 
-
-    // creation & update times
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "deleted")
-    private Boolean deleted = true;
+    @PrePersist
+    protected void onArchive() {
+        this.deleted = true;
+    }
 
 }
