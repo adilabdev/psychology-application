@@ -1,6 +1,7 @@
 package com.adilabdullayev.psychology.model.patient;
 
 import com.adilabdullayev.psychology.model.BaseEntity;
+import com.adilabdullayev.psychology.model.enums.Gender;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -32,6 +33,9 @@ public abstract class PatientBase extends BaseEntity {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
+    @Column(name = "middle_name")
+    private String middleName;
+
     // birth date - patient's age 'll be calculate, must
     @NotNull(message = "Doğum tarihi zorunludur.")
     @Column(name = "birth_date", nullable = false)
@@ -39,9 +43,9 @@ public abstract class PatientBase extends BaseEntity {
     private LocalDate birthDate;
 
     // gender - must
-    @NotBlank(message = "Cinsiyet boş bırakılamaz.")
+    @NotNull(message = "Cinsiyet boş bırakılamaz.")
     @Column(nullable = false)
-    private String gender;
+    private Gender gender;
 
     // phone number - must
     @NotBlank(message = "Telefon numarası zorunludur.")
@@ -81,6 +85,14 @@ public abstract class PatientBase extends BaseEntity {
         this.lastName = lastName;
     }
 
+    public String getMiddleName() {
+        return middleName;
+    }
+
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
+    }
+
     public LocalDate getBirthDate() {
         return birthDate;
     }
@@ -89,11 +101,11 @@ public abstract class PatientBase extends BaseEntity {
         this.birthDate = birthDate;
     }
 
-    public String getGender() {
+    public Gender getGender() {
         return gender;
     }
 
-    public void setGender(String gender) {
+    public void setGender(Gender gender) {
         this.gender = gender;
     }
 
