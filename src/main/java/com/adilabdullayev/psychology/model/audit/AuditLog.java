@@ -1,5 +1,6 @@
 package com.adilabdullayev.psychology.model.audit;
 
+import com.adilabdullayev.psychology.model.enums.AuditActionType;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -14,8 +15,9 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "action_type", nullable = false)
-    private String actionType; // e.g. DELETE, ARCHIVE, UPDATE
+    private AuditActionType actionType; // e.g. DELETE, ARCHIVE, UPDATE
 
     @Column(name = "entity_name", nullable = false)
     private String entityName; // e.g. Patient
