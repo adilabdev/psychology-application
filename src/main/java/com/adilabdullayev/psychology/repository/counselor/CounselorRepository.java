@@ -1,6 +1,7 @@
 package com.adilabdullayev.psychology.repository.counselor;
 
 import com.adilabdullayev.psychology.model.counselor.Counselor;
+import com.adilabdullayev.psychology.model.enums.AvailableDay;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.Query;
@@ -29,10 +30,9 @@ public interface CounselorRepository extends JpaRepository<Counselor, Long>, Cou
 
     Page<Counselor> findByEmailContainingIgnoreCaseOrFirstNameContainingIgnoreCase(String email, String firstName, Pageable pageable);
 
+    @Query("SELECT c FROM Counselor c JOIN c.availableDays d WHERE d = :day")
+    List<Counselor> findByAvailableDay(@Param("day") AvailableDay day);
+
     @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM Counselor c WHERE c.counselorCode = :code")
     boolean existsByCounselorCode(@Param("code") String counselorCode);
-
-    @Query("SELECT MAX(CAST(SUBSTRING(c.counselorCode, LENGTH(:prefix) + 2, 4) AS int)) " +
-            "FROM Counselor c WHERE c.counselorCode LIKE CONCAT(:prefix, '-%')")
-    Integer findMaxSequenceByPrefix(@Param("prefix") String prefix);
 }
