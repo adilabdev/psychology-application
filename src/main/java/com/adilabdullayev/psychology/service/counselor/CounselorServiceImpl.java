@@ -1,10 +1,13 @@
-package com.adilabdullayev.psychology.service.impl;
+package com.adilabdullayev.psychology.service.counselor;
 
 import com.adilabdullayev.psychology.dto.Request.CounselorFilterRequest;
 import com.adilabdullayev.psychology.model.counselor.Counselor;
-import com.adilabdullayev.psychology.model.counselor.CounselorSpecialization;
+import com.adilabdullayev.psychology.model.enums.AvailableDay;
+import com.adilabdullayev.psychology.model.enums.CounselorSpecialization;
 import com.adilabdullayev.psychology.repository.counselor.CounselorRepository;
-import com.adilabdullayev.psychology.service.counselor.CounselorService;
+import com.adilabdullayev.psychology.dto.Request.CounselorRequest;
+import com.adilabdullayev.psychology.service.audit.AuditLogService;
+import com.adilabdullayev.psychology.model.enums.AuditActionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,24 +18,82 @@ import java.util.List;
 public class CounselorServiceImpl implements CounselorService {
 
     private final CounselorRepository counselorRepository;
+    private final AuditLogService auditLogService;
 
     // method for bringing all patients
     @Override
     public List<Counselor> getAll() {
-        return counselorRepository.findAll(); // ✅ Senin yazdığın getAll() metodunun karşılığı
+        return counselorRepository.findAll();
     }
 
     // method for adding a new patient
     @Override
-    public Counselor add(Counselor counselor) {
-        return counselorRepository.save(counselor); // ✅ Senin yazdığın add() metodunun karşılığı
+    public Counselor add(CounselorRequest request) {
+        // Yeni Counselor nesnesi oluştur
+        Counselor counselor = new Counselor();
+
+        // basic informations
+        counselor.setFirstName(request.getFirstName());
+        counselor.setLastName(request.getLastName());
+        counselor.setMiddleName(request.getMiddleName());
+        counselor.setBirthDate(request.getBirthDate());
+        counselor.setPhone(request.getPhone());
+        counselor.setEmail(request.getEmail());
+
+        // is active
+        counselor.setIsActive(Boolean.TRUE.equals(request.getIsActive()));
+
+        // code generation
+        String code = request.getCounselorCode();
+        if (code == null || code.isBlank()) {
+            String prefix = "CS";
+            int next = getNextSequenceForPrefix(prefix);
+            code = prefix + "-" + String.format("%04d", next);
+        }
+        counselor.setCounselorCode(code);
+
+        // specialization
+        CounselorSpecialization specialization = getSpecialtyFromString(
+                String.valueOf(request.getSpecializationId())
+        );
+        counselor.setSpecialization(specialization);
+
+        // days
+        if (request.getAvailableDays() != null && !request.getAvailableDays().isEmpty()) {
+            List<AvailableDay> days = request.getAvailableDays().stream()
+                    .map(dayStr -> {
+                        try {
+                            return AvailableDay.valueOf(dayStr.toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            throw new RuntimeException("Geçersiz gün: " + dayStr);
+                        }
+                    })
+                    .toList();
+            counselor.setAvailableDays(days);
+        }
+
+        // save to db
+        Counselor saved = counselorRepository.save(counselor);
+
+        // Audit logging
+        auditLogService.logAction(
+                "Counselor",
+                saved.getId(),
+                AuditActionType.CREATE,
+                "system", // performedBy (can be improve) to do
+                "127.0.0.1", // ipAddress (can be improve) to do i think
+                "Yeni danışman eklendi: " + saved.getFirstName() + " " + saved.getLastName()
+        );
+
+        return saved;
     }
+
 
     // changes counselor's speciality from string to enum
     @Override
     public CounselorSpecialization getSpecialtyFromString(String specializationStr) {
         try {
-            return CounselorSpecialization.valueOf(specializationStr.toUpperCase()); // ✅ Senin yazdığın getSpecialtyFromString() metodunun karşılığı
+            return CounselorSpecialization.valueOf(specializationStr.toUpperCase()); //
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Geçersiz uzmanlık alanı: " + specializationStr);
         }
@@ -42,18 +103,52 @@ public class CounselorServiceImpl implements CounselorService {
     @Override
     public Counselor getCounselorById(Long counselorId) {
         return counselorRepository.findById(counselorId)
-                .orElseThrow(() -> new IllegalArgumentException("Counselor not found for id: " + counselorId)); // ✅ Senin yazdığın getCounselorById() metodunun karşılığı
+                .orElseThrow(() -> new IllegalArgumentException("Counselor not found for id: " + counselorId));
     }
 
-    @Override
-    public Counselor findCounselorById(Long counselorId) {
-        return counselorRepository.findById(counselorId)
-                .orElseThrow(() -> new RuntimeException("Danışman bulunamadı")); // ✅ Senin yazdığın findCounselorById() metodunun karşılığı
-    }
 
     // dinamic filtering
     @Override
     public List<Counselor> filterCounselors(CounselorFilterRequest filterRequest) {
-        return counselorRepository.filterCounselors(filterRequest); // ✅ Senin yazdığın filterCounselors() metodunun karşılığı
+        return counselorRepository.filterCounselors(filterRequest);
     }
+
+    @Override
+    public Integer getNextSequenceForPrefix(String prefix) {
+        List<Counselor> counselors = counselorRepository.findAll();
+        int max = counselors.stream()
+                .filter(c -> c.getCounselorCode() != null && c.getCounselorCode().startsWith(prefix + "-"))
+                .mapToInt(c -> {
+                    try {
+                        String[] parts = c.getCounselorCode().split("-");
+                        return Integer.parseInt(parts[1]);
+                    } catch (Exception e) {
+                        return 0;
+                    }
+                })
+                .max()
+                .orElse(0);
+        return max + 1;
+    }
+
+    // soft delete
+    @Override
+    public void softDeleteCounselor(Long counselorId) {
+        Counselor counselor = counselorRepository.findById(counselorId)
+                .orElseThrow(() -> new IllegalArgumentException("Silinecek danışman bulunamadı: " + counselorId));
+
+        // Soft-delete: @SQLDelete deleted=true
+        counselorRepository.delete(counselor);
+
+        // Audit logging
+        auditLogService.logAction(
+                "Counselor",
+                counselorId,
+                AuditActionType.DELETE,
+                "system", // performedBy
+                "127.0.0.1", // ipAddress
+                "Danışman soft-delete ile silindi: " + counselor.getFirstName() + " " + counselor.getLastName()
+        );
+    }
+
 }
