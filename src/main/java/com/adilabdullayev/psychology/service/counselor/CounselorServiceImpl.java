@@ -11,7 +11,11 @@ import com.adilabdullayev.psychology.model.enums.AuditActionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -150,5 +154,65 @@ public class CounselorServiceImpl implements CounselorService {
                 "Danışman soft-delete ile silindi: " + counselor.getFirstName() + " " + counselor.getLastName()
         );
     }
+
+
+
+    @Override
+    public List<Counselor> getActiveCounselors() {
+        return counselorRepository.findActiveCounselors();
+    }
+
+    @Override
+    public List<Counselor> getAllVisibleCounselors() {
+        return counselorRepository.findAllVisible();
+    }
+
+    @Override
+    public Page<Counselor> getPagedActiveCounselors(Pageable pageable) {
+        return counselorRepository.findAllByStatusAndDeletedFalse(CounselorStatus.ACTIVE, pageable);
+    }
+
+    @Override
+    public Counselor updateCounselor(Long id, CounselorRequest request) {
+        Counselor counselor = getCounselorById(id);
+        counselor.setFirstName(request.getFirstName());
+        counselor.setLastName(request.getLastName());
+        counselor.setMiddleName(request.getMiddleName());
+        counselor.setPhone(request.getPhone());
+        counselor.setEmail(request.getEmail());
+        counselor.setBirthDate(request.getBirthDate());
+        counselor.setIsActive(Boolean.TRUE.equals(request.getIsActive()));
+        counselor.setSpecialization(getSpecialtyFromString(String.valueOf(request.getSpecializationId())));
+        return counselorRepository.save(counselor);
+    }
+
+    @Override
+    public List<Counselor> searchCounselors(String query) {
+        return counselorRepository.searchByQuery(query);
+    }
+
+    @Override
+    public Map<String, Object> getSessionInfo(Long counselorId) {
+        Counselor counselor = getCounselorById(counselorId);
+        return Map.of(
+                "sessionCount", counselor.getSessionCount(),
+                "lastSessionDate", counselor.getLastSessionDate()
+        );
+    }
+
+    @Override
+    public Map<String, Object> getCounselorStatistics() {
+        long total = counselorRepository.count();
+        long active = counselorRepository.findActiveCounselors().size();
+        long retired = counselorRepository.findAllVisible().stream()
+                .filter(c -> c.getStatus() == CounselorStatus.RETIRED)
+                .count();
+        return Map.of(
+                "totalCounselors", total,
+                "activeCounselors", active,
+                "retiredCounselors", retired
+        );
+    }
+
 
 }
