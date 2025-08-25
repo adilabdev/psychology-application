@@ -10,7 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/counselors")
@@ -41,6 +44,43 @@ public class CounselorController {
         counselorService.softDeleteCounselor(id);
         return ResponseEntity.noContent().build();
     }
+
+
+    @GetMapping("/active")
+    public ResponseEntity<List<Counselor>> getActiveCounselors() {
+        return ResponseEntity.ok(counselorService.getActiveCounselors());
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<Counselor>> getAllVisibleCounselors() {
+        return ResponseEntity.ok(counselorService.getAllVisibleCounselors());
+    }
+
+    @GetMapping("/paged")
+    public ResponseEntity<Page<Counselor>> getPagedActiveCounselors(Pageable pageable) {
+        return ResponseEntity.ok(counselorService.getPagedActiveCounselors(pageable));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Counselor> updateCounselor(@PathVariable Long id, @Valid @RequestBody CounselorRequest request) {
+        return ResponseEntity.ok(counselorService.updateCounselor(id, request));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Counselor>> searchCounselors(@RequestParam String query) {
+        return ResponseEntity.ok(counselorService.searchCounselors(query));
+    }
+
+    @GetMapping("/{id}/sessions")
+    public ResponseEntity<Map<String, Object>> getSessionInfo(@PathVariable Long id) {
+        return ResponseEntity.ok(counselorService.getSessionInfo(id));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Object>> getCounselorStats() {
+        return ResponseEntity.ok(counselorService.getCounselorStatistics());
+    }
+
 
 }
 
