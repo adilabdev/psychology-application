@@ -3,5 +3,6 @@ package com.adilabdullayev.psychology.model.enums;
 public enum CounselorStatus {
     ACTIVE,
     INACTIVE,
-    SUSPENDED
+    ON_LEAVE,
+    RETIRED
 }

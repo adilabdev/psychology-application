@@ -1,4 +1,4 @@
-package com.adilabdullayev.psychology.model.counselor;
+package com.adilabdullayev.psychology.model.enums;
 
 public enum CounselorSpecialization {
     ANORMAL_PSIKOLOJI,
