@@ -1,6 +1,7 @@
 package com.adilabdullayev.psychology.model.counselor;
 
 import com.adilabdullayev.psychology.model.BaseEntity;
+import com.adilabdullayev.psychology.model.enums.AvailableDay;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -9,6 +10,7 @@ import org.hibernate.annotations.SQLDelete;
 
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -23,12 +25,10 @@ public abstract class CounselorBase extends BaseEntity {
     private Long id;
 
     // Name, can't be blank
-    @NotBlank(message = "Ad boş bırakılamaz.")
     @Column(name = "first_name", nullable = false)
     private String firstName;
 
     // Lastname, can't be blank
-    @NotBlank(message = "Soyad boş bırakılamaz.")
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
@@ -37,22 +37,22 @@ public abstract class CounselorBase extends BaseEntity {
     private String middleName;
 
     // Birthdate, can't be null and must be in the past
-    @NotNull(message = "Doğum tarihi zorunludur.")
     @Column(name = "birth_date", nullable = false)
-    @Past(message = "Doğum tarihi geçmiş bir tarih olmalıdır.")
     private LocalDate birthDate;
 
     // Gender, optional but should be validated
-    @NotBlank(message = "Telefon numarası zorunludur.")
-    @Pattern(regexp = "^\\+\\d{10,15}$", message = "Geçerli bir telefon numarası giriniz.")
     @Column(nullable = false)
     private String phone;
 
     // Email, can't be blank and should be valid
-    @NotBlank(message = "E-posta boş bırakılamaz.")
-    @Email(message = "Geçerli bir e-posta adresi giriniz.")
     @Column(nullable = false)
     private String email;
+
+    @ElementCollection(targetClass = AvailableDay.class)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "counselor_available_days", joinColumns = @JoinColumn(name = "counselor_id"))
+    @Column(name = "day")
+    private List<AvailableDay> availableDays;
 
 
     public Long getId() {
