@@ -57,9 +57,9 @@ public class CounselorRepositoryImpl implements CounselorRepositoryCustom {
             predicates.add(cb.lessThanOrEqualTo(root.get("updatedAt"), filter.getUpdatedBefore().atTime(23, 59, 59)));
         }
 
-        // Ekstra alanlar (örnek: specialization, role, isActive)
+        // Extras (e.g. specialization, role, isActive)
         if (filter.getSpecialization() != null && !filter.getSpecialization().isBlank()) {
-            predicates.add(cb.like(cb.lower(root.get("specialization")), "%" + filter.getSpecialization().toLowerCase() + "%"));
+            predicates.add(cb.equal(root.get("specialization").get("name"), filter.getSpecialization()));
         }
 
         if (filter.getRole() != null && !filter.getRole().isBlank()) {
