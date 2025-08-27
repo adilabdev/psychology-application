@@ -2,6 +2,7 @@ package com.adilabdullayev.psychology.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 public abstract class BaseEntity {
 
     @Column(name = "deleted")
+    @ColumnDefault("false")
     protected Boolean deleted = false;
 
     @CreationTimestamp
@@ -20,6 +22,9 @@ public abstract class BaseEntity {
     @UpdateTimestamp
     @Column(name = "updated_at")
     protected LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    protected LocalDateTime deletedAt;
 
     public Boolean getDeleted() {
         return deleted;
@@ -33,7 +38,23 @@ public abstract class BaseEntity {
         return createdAt;
     }
 
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }
