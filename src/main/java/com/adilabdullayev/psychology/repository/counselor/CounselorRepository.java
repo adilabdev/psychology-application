@@ -1,9 +1,12 @@
 package com.adilabdullayev.psychology.repository.counselor;
 
+import com.adilabdullayev.psychology.model.archived.ArchivedCounselor;
 import com.adilabdullayev.psychology.model.counselor.Counselor;
 import com.adilabdullayev.psychology.model.enums.AvailableDay;
 import com.adilabdullayev.psychology.model.enums.CounselorStatus;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -51,5 +54,4 @@ public interface CounselorRepository extends JpaRepository<Counselor, Long>, Cou
             "LOWER(c.email) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(c.phone) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Counselor> searchByQuery(@Param("query") String query);
-
 }

@@ -2,6 +2,7 @@ package com.adilabdullayev.psychology.repository.counselor;
 
 import com.adilabdullayev.psychology.dto.Request.CounselorFilterRequest;
 import com.adilabdullayev.psychology.model.counselor.Counselor;
+import com.adilabdullayev.psychology.model.enums.CounselorSpecialization;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -59,8 +60,14 @@ public class CounselorRepositoryImpl implements CounselorRepositoryCustom {
 
         // Extras (e.g. specialization, role, isActive)
         if (filter.getSpecialization() != null && !filter.getSpecialization().isBlank()) {
-            predicates.add(cb.equal(root.get("specialization").get("name"), filter.getSpecialization()));
+            try {
+                CounselorSpecialization specEnum = CounselorSpecialization.valueOf(filter.getSpecialization().toUpperCase());
+                predicates.add(cb.equal(root.get("specialization"), specEnum));
+            } catch (IllegalArgumentException e) {
+                // invalid specialization value, ignore filter
+            }
         }
+
 
         if (filter.getRole() != null && !filter.getRole().isBlank()) {
             predicates.add(cb.equal(cb.lower(root.get("role")), filter.getRole().toLowerCase()));

@@ -1,103 +1,122 @@
 package com.adilabdullayev.psychology.service.counselor;
 
 import com.adilabdullayev.psychology.dto.Request.CounselorFilterRequest;
+import com.adilabdullayev.psychology.dto.Request.CounselorRequest;
+import com.adilabdullayev.psychology.dto.Response.CounselorResponse;
+import com.adilabdullayev.psychology.mapper.CounselorMapper;
 import com.adilabdullayev.psychology.model.counselor.Counselor;
 import com.adilabdullayev.psychology.model.enums.AvailableDay;
-import com.adilabdullayev.psychology.model.enums.CounselorSpecialization;
-import com.adilabdullayev.psychology.repository.counselor.CounselorRepository;
-import com.adilabdullayev.psychology.dto.Request.CounselorRequest;
-import com.adilabdullayev.psychology.service.audit.AuditLogService;
 import com.adilabdullayev.psychology.model.enums.AuditActionType;
-import lombok.RequiredArgsConstructor;
+import com.adilabdullayev.psychology.model.enums.CounselorSpecialization;
+import com.adilabdullayev.psychology.model.enums.CounselorStatus;
+import com.adilabdullayev.psychology.model.archived.ArchivedCounselor;
+import com.adilabdullayev.psychology.model.archived.ArchivedUserCounselorNote;
+import com.adilabdullayev.psychology.repository.archived.ArchivedCounselorRepository;
+import com.adilabdullayev.psychology.repository.counselor.CounselorRepository;
+import com.adilabdullayev.psychology.repository.notes.ArchivedUserCounselorNoteRepository;
+import com.adilabdullayev.psychology.service.audit.AuditLogService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.beans.BeanUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class CounselorServiceImpl implements CounselorService {
 
     private final CounselorRepository counselorRepository;
     private final AuditLogService auditLogService;
+    private final CounselorMapper counselorMapper;
+    private final ArchivedUserCounselorNoteRepository archivedUserCounselorNoteRepository;
+    private final ArchivedCounselorRepository archivedCounselorRepository;
 
-    // method for bringing all patients
+    public CounselorServiceImpl(CounselorRepository counselorRepository,
+                                AuditLogService auditLogService,
+                                CounselorMapper counselorMapper,
+                                ArchivedUserCounselorNoteRepository archivedUserCounselorNoteRepository,
+                                ArchivedCounselorRepository archivedCounselorRepository) {
+        this.counselorRepository = counselorRepository;
+        this.auditLogService = auditLogService;
+        this.counselorMapper = counselorMapper;
+        this.archivedUserCounselorNoteRepository = archivedUserCounselorNoteRepository;
+        this.archivedCounselorRepository = archivedCounselorRepository;
+    }
+
+    // method for bringing all counselors
     @Override
     public List<Counselor> getAll() {
         return counselorRepository.findAll();
     }
 
-    // method for adding a new patient
+    // method for adding a new counselor
     @Override
     public Counselor add(CounselorRequest request) {
-        // Yeni Counselor nesnesi oluştur
-        Counselor counselor = new Counselor();
+        return addCounselor(request, "SYSTEM", null);
+    }
 
-        // basic informations
+    @Override
+    @Transactional
+    public Counselor addCounselor(CounselorRequest request, String performedBy, HttpServletRequest httpRequest) {
+        String email = request.getEmail();
+        String phone = request.getPhone();
+        String ipAddress = httpRequest != null ? httpRequest.getRemoteAddr() : "SYSTEM";
+
+        Optional<Counselor> existingOpt = counselorRepository.findByEmailOrPhone(email, phone);
+        existingOpt.ifPresent(counselorRepository::delete);
+
+        archivedCounselorRepository.findByEmailOrPhone(email, phone)
+                .ifPresent(archivedCounselorRepository::delete);
+
+        Counselor counselor = new Counselor();
         counselor.setFirstName(request.getFirstName());
         counselor.setLastName(request.getLastName());
         counselor.setMiddleName(request.getMiddleName());
         counselor.setBirthDate(request.getBirthDate());
-        counselor.setPhone(request.getPhone());
-        counselor.setEmail(request.getEmail());
-
-        // is active
+        counselor.setPhone(phone);
+        counselor.setEmail(email);
         counselor.setIsActive(Boolean.TRUE.equals(request.getIsActive()));
 
-        // code generation
         String code = request.getCounselorCode();
         if (code == null || code.isBlank()) {
-            String prefix = "CS";
-            int next = getNextSequenceForPrefix(prefix);
-            code = prefix + "-" + String.format("%04d", next);
+            code = "CS-" + String.format("%04d", getNextSequenceForPrefix("CS"));
         }
         counselor.setCounselorCode(code);
 
-        // specialization
-        CounselorSpecialization specialization = getSpecialtyFromString(
-                String.valueOf(request.getSpecializationId())
-        );
-        counselor.setSpecialization(specialization);
+        counselor.setSpecialization(getSpecialtyFromString(request.getSpecialization()));
 
-        // days
-        if (request.getAvailableDays() != null && !request.getAvailableDays().isEmpty()) {
-            List<AvailableDay> days = request.getAvailableDays().stream()
-                    .map(dayStr -> {
-                        try {
-                            return AvailableDay.valueOf(dayStr.toUpperCase());
-                        } catch (IllegalArgumentException e) {
-                            throw new RuntimeException("Geçersiz gün: " + dayStr);
-                        }
-                    })
-                    .toList();
-            counselor.setAvailableDays(days);
+        if (request.getAvailableDays() != null) {
+            List<AvailableDay> availableDays = request.getAvailableDays().stream()
+                    .map(day -> AvailableDay.valueOf(day.toUpperCase()))
+                    .collect(Collectors.toList());
+            counselor.setAvailableDays(availableDays);
         }
 
-        // save to db
         Counselor saved = counselorRepository.save(counselor);
 
-        // Audit logging
         auditLogService.logAction(
+                AuditActionType.CREATE,
                 "Counselor",
                 saved.getId(),
-                AuditActionType.CREATE,
-                "system", // performedBy (can be improve) to do
-                "127.0.0.1", // ipAddress (can be improve) to do i think
+                performedBy,
+                ipAddress,
                 "Yeni danışman eklendi: " + saved.getFirstName() + " " + saved.getLastName()
         );
 
         return saved;
     }
 
-
     // changes counselor's speciality from string to enum
     @Override
     public CounselorSpecialization getSpecialtyFromString(String specializationStr) {
         try {
-            return CounselorSpecialization.valueOf(specializationStr.toUpperCase()); //
+            return CounselorSpecialization.valueOf(specializationStr.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Geçersiz uzmanlık alanı: " + specializationStr);
         }
@@ -105,57 +124,82 @@ public class CounselorServiceImpl implements CounselorService {
 
     // Method to get a Counselor by ID
     @Override
-    public Counselor getCounselorById(Long counselorId) {
-        return counselorRepository.findById(counselorId)
-                .orElseThrow(() -> new IllegalArgumentException("Counselor not found for id: " + counselorId));
+    public CounselorResponse findCounselorById(Long counselorId) {
+        Counselor counselor = counselorRepository.findById(counselorId)
+                .orElseThrow(() -> new RuntimeException("Counselor not found"));
+        return counselorMapper.toResponse(counselor);
     }
 
-
-    // dinamic filtering
+    // dynamic filtering
     @Override
     public List<Counselor> filterCounselors(CounselorFilterRequest filterRequest) {
         return counselorRepository.filterCounselors(filterRequest);
     }
 
     @Override
+    public Optional<Counselor> findByEmailOrPhone(String email, String phone) {
+        return counselorRepository.findByEmailOrPhone(email, phone);
+    }
+
+    @Override
     public Integer getNextSequenceForPrefix(String prefix) {
-        List<Counselor> counselors = counselorRepository.findAll();
-        int max = counselors.stream()
+        return counselorRepository.findAll().stream()
                 .filter(c -> c.getCounselorCode() != null && c.getCounselorCode().startsWith(prefix + "-"))
                 .mapToInt(c -> {
                     try {
-                        String[] parts = c.getCounselorCode().split("-");
-                        return Integer.parseInt(parts[1]);
+                        return Integer.parseInt(c.getCounselorCode().split("-")[1]);
                     } catch (Exception e) {
                         return 0;
                     }
                 })
                 .max()
-                .orElse(0);
-        return max + 1;
+                .orElse(0) + 1;
     }
 
     // soft delete
+    @Transactional
     @Override
-    public void softDeleteCounselor(Long counselorId) {
+    public void softDeleteCounselor(Long counselorId, String deletionReason, String deletedBy, HttpServletRequest request) {
         Counselor counselor = counselorRepository.findById(counselorId)
                 .orElseThrow(() -> new IllegalArgumentException("Silinecek danışman bulunamadı: " + counselorId));
 
-        // Soft-delete: @SQLDelete deleted=true
+        String ipAddress = request.getRemoteAddr();
+
+        ArchivedCounselor archived = new ArchivedCounselor();
+        BeanUtils.copyProperties(counselor, archived, "id", "createdAt", "updatedAt");
+
+        archived.setCreatedAt(counselor.getCreatedAt());
+        archived.setUpdatedAt(counselor.getUpdatedAt());
+        archived.setDeleted(true);
+        archived.setDeletedAt(LocalDateTime.now());
+        archived.setDeletedBy(deletedBy);
+        archived.setIpAddress(ipAddress);
+
+        archivedCounselorRepository.save(archived);
+
+        if (counselor.getCounselorNotes() != null) {
+            List<ArchivedUserCounselorNote> archivedNotes = counselor.getCounselorNotes().stream().map(note -> {
+                ArchivedUserCounselorNote an = new ArchivedUserCounselorNote();
+                BeanUtils.copyProperties(note, an, "id", "createdAt", "updatedAt");
+                an.setDeletedAt(LocalDateTime.now());
+                return an;
+            }).collect(Collectors.toList());
+
+            archivedUserCounselorNoteRepository.saveAll(archivedNotes);
+            counselor.getCounselorNotes().clear();
+        }
+
         counselorRepository.delete(counselor);
 
-        // Audit logging
         auditLogService.logAction(
+                AuditActionType.ARCHIVE,
                 "Counselor",
                 counselorId,
-                AuditActionType.DELETE,
-                "system", // performedBy
-                "127.0.0.1", // ipAddress
-                "Danışman soft-delete ile silindi: " + counselor.getFirstName() + " " + counselor.getLastName()
+                deletedBy,
+                ipAddress,
+                "Danışman arşivlendi. Sebep: " + deletionReason
         );
     }
-
-
 
     @Override
     public List<Counselor> getActiveCounselors() {
@@ -173,8 +217,17 @@ public class CounselorServiceImpl implements CounselorService {
     }
 
     @Override
-    public Counselor updateCounselor(Long id, CounselorRequest request) {
-        Counselor counselor = getCounselorById(id);
+    @Transactional
+    public CounselorResponse updateCounselor(Long id, CounselorRequest request, String performedBy, HttpServletRequest httpRequest) {
+        Counselor counselor = counselorRepository.findById(id)
+                .filter(c -> !c.getDeleted())
+                .orElseThrow(() -> new RuntimeException("Danışman bulunamadı veya silinmiş. ID: " + id));
+
+        Optional<Counselor> conflictOpt = counselorRepository.findByEmailOrPhone(request.getEmail(), request.getPhone());
+        if (conflictOpt.isPresent() && !conflictOpt.get().getId().equals(id)) {
+            throw new RuntimeException("Bu e-posta veya telefon başka bir danışmana ait.");
+        }
+
         counselor.setFirstName(request.getFirstName());
         counselor.setLastName(request.getLastName());
         counselor.setMiddleName(request.getMiddleName());
@@ -182,8 +235,20 @@ public class CounselorServiceImpl implements CounselorService {
         counselor.setEmail(request.getEmail());
         counselor.setBirthDate(request.getBirthDate());
         counselor.setIsActive(Boolean.TRUE.equals(request.getIsActive()));
-        counselor.setSpecialization(getSpecialtyFromString(String.valueOf(request.getSpecializationId())));
-        return counselorRepository.save(counselor);
+        counselor.setSpecialization(getSpecialtyFromString(request.getSpecialization()));
+
+        Counselor updated = counselorRepository.save(counselor);
+
+        auditLogService.logAction(
+                AuditActionType.UPDATE,
+                "Counselor",
+                updated.getId(),
+                performedBy,
+                httpRequest != null ? httpRequest.getRemoteAddr() : "SYSTEM",
+                "Danışman bilgileri güncellendi: " + updated.getFirstName() + " " + updated.getLastName()
+        );
+
+        return counselorMapper.toResponse(updated);
     }
 
     @Override
@@ -193,7 +258,8 @@ public class CounselorServiceImpl implements CounselorService {
 
     @Override
     public Map<String, Object> getSessionInfo(Long counselorId) {
-        Counselor counselor = getCounselorById(counselorId);
+        Counselor counselor = counselorRepository.findById(counselorId)
+                .orElseThrow(() -> new RuntimeException("Counselor not found"));
         return Map.of(
                 "sessionCount", counselor.getSessionCount(),
                 "lastSessionDate", counselor.getLastSessionDate()
@@ -213,6 +279,4 @@ public class CounselorServiceImpl implements CounselorService {
                 "retiredCounselors", retired
         );
     }
-
-
 }

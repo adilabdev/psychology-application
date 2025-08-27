@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 public class CounselorRequest {
@@ -29,7 +30,11 @@ public class CounselorRequest {
     private String email;
 
     private String counselorCode;
+
     private Boolean isActive;
-    private String availableDays;
-    private Long specializationId;
+
+    private List<String> availableDays;
+
+    @NotNull(message = "Uzmanlık alanı zorunludur.")
+    private String specialization;
 }
