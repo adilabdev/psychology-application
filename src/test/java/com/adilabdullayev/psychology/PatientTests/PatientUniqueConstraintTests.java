@@ -1,9 +1,10 @@
 package com.adilabdullayev.psychology.PatientTests;
 
+import com.adilabdullayev.psychology.model.enums.Gender;
+import com.adilabdullayev.psychology.model.enums.PatientStatus;
 import com.adilabdullayev.psychology.model.patient.Patient;
-import com.adilabdullayev.psychology.model.patient.PatientStatus;
 import com.adilabdullayev.psychology.repository.patient.PatientRepository;
-import com.adilabdullayev.psychology.service.PatientService;
+import com.adilabdullayev.psychology.service.patient.PatientService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,10 +35,10 @@ public class PatientUniqueConstraintTests {
         patient1.setFirstName("Ahmet");
         patient1.setLastName("Test");
         patient1.setBirthDate(LocalDate.of(1990, 1, 1));
-        patient1.setGender("Erkek");
+        patient1.setGender(Gender.MALE);
         patient1.setEmail("unique@test.com");
         patient1.setPhone("+90500000001");
-        patient1.setStatus(PatientStatus.YENI);
+        patient1.setStatus(PatientStatus.NEW);
 
         patientService.addPatient(patient1);
     }
@@ -48,10 +49,10 @@ public class PatientUniqueConstraintTests {
         duplicateEmailPatient.setFirstName("Ali");
         duplicateEmailPatient.setLastName("Test");
         duplicateEmailPatient.setBirthDate(LocalDate.of(1991, 2, 2));
-        duplicateEmailPatient.setGender("Erkek");
+        duplicateEmailPatient.setGender(Gender.MALE);
         duplicateEmailPatient.setEmail("unique@test.com"); // aynı email
         duplicateEmailPatient.setPhone("+90500000002");
-        duplicateEmailPatient.setStatus(PatientStatus.YENI);
+        duplicateEmailPatient.setStatus(PatientStatus.NEW);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             patientService.addPatient(duplicateEmailPatient);
@@ -66,10 +67,10 @@ public class PatientUniqueConstraintTests {
         duplicatePhonePatient.setFirstName("Mehmet");
         duplicatePhonePatient.setLastName("Test");
         duplicatePhonePatient.setBirthDate(LocalDate.of(1992, 3, 3));
-        duplicatePhonePatient.setGender("Erkek");
+        duplicatePhonePatient.setGender(Gender.MALE);
         duplicatePhonePatient.setEmail("unique2@test.com");
         duplicatePhonePatient.setPhone("+90500000001"); // aynı telefon
-        duplicatePhonePatient.setStatus(PatientStatus.YENI);
+        duplicatePhonePatient.setStatus(PatientStatus.NEW);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             patientService.addPatient(duplicatePhonePatient);
@@ -80,17 +81,16 @@ public class PatientUniqueConstraintTests {
 
     @Test
     public void testRestoreDeletedPatientWithSameEmailPhone() {
-        // Hasta sil
         patientService.softDeletePatient(patient1.getId(), "Test silme", "JUnit", "127.0.0.1");
 
-        // Silinmiş hasta ile aynı email ve phone kullanarak ekleme
         Patient newPatient = new Patient();
         newPatient.setFirstName("Ahmet2");
         newPatient.setLastName("Test2");
         newPatient.setBirthDate(LocalDate.of(1990, 1, 1));
-        newPatient.setGender("Erkek");
+        newPatient.setGender(Gender.MALE);
         newPatient.setEmail("unique@test.com");
         newPatient.setPhone("+90500000001");
+        newPatient.setStatus(PatientStatus.NEW);
 
         Patient restored = patientService.addPatient(newPatient);
         assertNotNull(restored);

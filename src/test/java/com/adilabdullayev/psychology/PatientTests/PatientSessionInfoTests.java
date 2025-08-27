@@ -1,10 +1,11 @@
 package com.adilabdullayev.psychology.PatientTests;
 
+import com.adilabdullayev.psychology.model.enums.Gender;
+import com.adilabdullayev.psychology.model.enums.PatientStatus;
 import com.adilabdullayev.psychology.model.notes.UserCounselorNote;
 import com.adilabdullayev.psychology.model.patient.Patient;
-import com.adilabdullayev.psychology.model.patient.PatientStatus;
-import com.adilabdullayev.psychology.service.PatientService;
 import com.adilabdullayev.psychology.repository.patient.PatientRepository;
+import com.adilabdullayev.psychology.service.patient.PatientService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,10 +37,10 @@ public class PatientSessionInfoTests {
         patient.setFirstName("Ahmet");
         patient.setLastName("Test");
         patient.setBirthDate(LocalDate.of(1990, 1, 1));
-        patient.setGender("Erkek");
+        patient.setGender(Gender.MALE);
         patient.setEmail("ahmet.test@example.com");
         patient.setPhone("+90597433533");
-        patient.setStatus(PatientStatus.YENI);
+        patient.setStatus(PatientStatus.NEW);
 
         UserCounselorNote note1 = new UserCounselorNote();
         note1.setContent("İlk seans notu");
@@ -63,18 +64,14 @@ public class PatientSessionInfoTests {
         assertNotNull(fetched);
         assertEquals(2, fetched.getNotes().size());
 
-        UserCounselorNote firstNote = fetched.getNotes().get(0);
-        assertNotNull(firstNote.getContent());
-        assertNotNull(firstNote.getCreatedAt());
-
-        UserCounselorNote secondNote = fetched.getNotes().get(1);
-        assertNotNull(secondNote.getContent());
-        assertNotNull(secondNote.getCreatedAt());
+        assertNotNull(fetched.getNotes().get(0).getContent());
+        assertNotNull(fetched.getNotes().get(0).getCreatedAt());
+        assertNotNull(fetched.getNotes().get(1).getContent());
+        assertNotNull(fetched.getNotes().get(1).getCreatedAt());
     }
 
     @Test
     public void testDeletedPatientSessionInfo() {
-        // Silme işlemi
         patientService.softDeletePatient(patient.getId(), "Test silme", "JUnit", "127.0.0.1");
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {

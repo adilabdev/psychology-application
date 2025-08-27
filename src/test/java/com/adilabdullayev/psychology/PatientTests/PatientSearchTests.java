@@ -1,7 +1,8 @@
 package com.adilabdullayev.psychology.PatientTests;
 
+import com.adilabdullayev.psychology.model.enums.Gender;
 import com.adilabdullayev.psychology.model.patient.Patient;
-import com.adilabdullayev.psychology.service.PatientService;
+import com.adilabdullayev.psychology.service.patient.PatientService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,7 @@ public class PatientSearchTests {
         patient.setEmail("ahmet@example.com");
         patient.setPhone("+90500000001");
         patient.setBirthDate(java.time.LocalDate.of(1990,1,1));
-        patient.setGender("Male");
+        patient.setGender(Gender.MALE);
 
         patientService.addPatient(patient);
     }

@@ -1,6 +1,6 @@
 package com.adilabdullayev.psychology.PatientTests;
 
-import com.adilabdullayev.psychology.service.PatientService;
+import com.adilabdullayev.psychology.service.patient.PatientService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,7 +15,7 @@ public class PatientSearchFilterTests {
 
     @Test
     public void testFilterByStatus() {
-        // patientService.searchPatientsByStatus(PatientStatus.YENI);
+        // placeholder, uyumlu şekilde
         assertTrue(true);
     }
 }
