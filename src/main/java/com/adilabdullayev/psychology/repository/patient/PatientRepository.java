@@ -12,7 +12,6 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Long>, PatientRepositoryCustom {
 
@@ -24,15 +23,15 @@ public interface PatientRepository extends JpaRepository<Patient, Long>, Patient
 
     // finds a client by either email or phone, regardless of deletion status
     @Query("SELECT p FROM Patient p WHERE p.email = :email OR p.phone = :phone")
-    Optional<Patient> findByEmailOrPhone(String email, String phone);   //to get all (deleted and undeleted)
+    Optional<Patient> findByEmailOrPhone(String email, String phone);   // to get all (deleted and undeleted)
 
     // finds an active patient by id
-    Optional<Patient> findByEmailOrPhoneAndDeletedFalse(String email, String phone); //to get only undeleted
+    Optional<Patient> findByEmailOrPhoneAndDeletedFalse(String email, String phone); // to get only undeleted
 
     // finds by name
     List<Patient> findByEmailContainingIgnoreCaseOrFirstNameContainingIgnoreCase(String email, String firstName);
 
-    // finds by email or name
+    // finds by email or name with pagination
     Page<Patient> findByEmailContainingIgnoreCaseOrFirstNameContainingIgnoreCase(String email, String firstName, Pageable pageable);
 
     // returns a paged list of active clients
@@ -43,7 +42,7 @@ public interface PatientRepository extends JpaRepository<Patient, Long>, Patient
 
     Page<Patient> findByDeletedFalse(Pageable pageable);
 
-    // checks if a client with the given patient code is already exists
+    // checks if a client with the given patient code already exists
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Patient p WHERE p.patientCode = :code")
     boolean existsByPatientCode(@Param("code") String patientCode);
 
@@ -51,5 +50,4 @@ public interface PatientRepository extends JpaRepository<Patient, Long>, Patient
     @Query("SELECT MAX(CAST(SUBSTRING(p.patientCode, LENGTH(:prefix) + 2, 4) AS int)) " +
             "FROM Patient p WHERE p.patientCode LIKE CONCAT(:prefix, '-%')")
     Integer findMaxSequenceByPrefix(@Param("prefix") String prefix);
-
 }

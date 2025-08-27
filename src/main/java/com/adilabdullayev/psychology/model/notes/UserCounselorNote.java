@@ -1,6 +1,6 @@
 package com.adilabdullayev.psychology.model.notes;
 
-import com.adilabdullayev.psychology.model.patient.ArchivedPatients;
+import com.adilabdullayev.psychology.model.archived.ArchivedPatients;
 import com.adilabdullayev.psychology.model.counselor.Counselor;
 import jakarta.persistence.*;
 import lombok.Data;

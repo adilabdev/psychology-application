@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import java.util.Map;
 import java.util.HashMap;
+import jakarta.persistence.EntityNotFoundException;
+
+
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -27,4 +30,18 @@ public class GlobalExceptionHandler {
         });
         return ResponseEntity.badRequest().body(errors);
     }
+
+
+    // there is no record
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<String> handleEntityNotFound(EntityNotFoundException ex) {
+        return ResponseEntity.status(404).body(ex.getMessage());
+    }
+
+    // unknown errors
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleRuntime(RuntimeException ex) {
+        return ResponseEntity.status(500).body("Beklenmeyen bir hata oluştu: " + ex.getMessage());
+    }
+
 }
