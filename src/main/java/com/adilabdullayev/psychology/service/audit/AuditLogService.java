@@ -14,16 +14,23 @@ public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
 
-    public void logAction(String entityName, Long entityId, AuditActionType actionType, String performedBy, String ipAddress, String description) {
+    public void logAction(AuditActionType actionType,
+                          String entityName,
+                          Long entityId,
+                          String performedBy,
+                          String ipAddress,
+                          String description) {
+
         AuditLog log = new AuditLog();
+        log.setActionType(actionType);
         log.setEntityName(entityName);
         log.setEntityId(entityId);
-        log.setActionType(actionType);
         log.setPerformedBy(performedBy);
         log.setIpAddress(ipAddress);
-        log.setDescription(description);
         log.setPerformedAt(LocalDateTime.now());
+        log.setDescription(description);
 
         auditLogRepository.save(log);
     }
 }
+
