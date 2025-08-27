@@ -1,6 +1,6 @@
-package com.adilabdullayev.psychology.repository.patient;
+package com.adilabdullayev.psychology.repository.archived;
 
-import com.adilabdullayev.psychology.model.patient.ArchivedPatients;
+import com.adilabdullayev.psychology.model.archived.ArchivedPatients;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
