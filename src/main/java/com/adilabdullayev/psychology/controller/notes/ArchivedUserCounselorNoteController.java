@@ -1,7 +1,7 @@
 package com.adilabdullayev.psychology.controller.notes;
 
 import com.adilabdullayev.psychology.model.enums.NoteType;
-import com.adilabdullayev.psychology.model.notes.ArchivedUserCounselorNote;
+import com.adilabdullayev.psychology.model.archived.ArchivedUserCounselorNote;
 import com.adilabdullayev.psychology.service.notes.ArchivedUserCounselorNoteService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;

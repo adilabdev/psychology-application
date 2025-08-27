@@ -1,7 +1,7 @@
 package com.adilabdullayev.psychology.service.notes;
 
 import com.adilabdullayev.psychology.model.enums.NoteType;
-import com.adilabdullayev.psychology.model.notes.ArchivedUserCounselorNote;  // Import for ArchivedUserCounselorNote
+import com.adilabdullayev.psychology.model.archived.ArchivedUserCounselorNote;  // Import for ArchivedUserCounselorNote
 import com.adilabdullayev.psychology.repository.notes.ArchivedUserCounselorNoteRepository;  // Import for ArchievedUserCounselorNoteRepository
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;  // Import for Page

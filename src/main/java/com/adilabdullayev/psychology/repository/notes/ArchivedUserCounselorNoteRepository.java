@@ -1,7 +1,7 @@
 package com.adilabdullayev.psychology.repository.notes;
 
 import com.adilabdullayev.psychology.model.enums.NoteType;
-import com.adilabdullayev.psychology.model.notes.ArchivedUserCounselorNote;
+import com.adilabdullayev.psychology.model.archived.ArchivedUserCounselorNote;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -39,4 +39,11 @@ public interface ArchivedUserCounselorNoteRepository extends JpaRepository<Archi
 
     // filters archived notes by both type and visibility
     List<ArchivedUserCounselorNote> findByNoteTypeAndIsVisibleToPatient(NoteType noteType, Boolean isVisibleToPatient);
+
+    List<ArchivedUserCounselorNote> findByArchivedCounselorEmail(String email);
+
+    List<ArchivedUserCounselorNote> findByArchivedCounselorCode(String code);
+
+    List<ArchivedUserCounselorNote> findByArchivedCounselorSpecialization(String specialization);
+
 }
