@@ -1,7 +1,10 @@
 package com.adilabdullayev.psychology.controller;
 
+import com.adilabdullayev.psychology.dto.Request.PatientRequest;
+import com.adilabdullayev.psychology.dto.Response.PatientResponse;
+import com.adilabdullayev.psychology.mapper.PatientMapper;
 import com.adilabdullayev.psychology.model.patient.Patient;
-import com.adilabdullayev.psychology.service.PatientService;
+import com.adilabdullayev.psychology.service.patient.PatientService;
 import com.adilabdullayev.psychology.dto.Request.PatientFilterRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -24,6 +27,8 @@ import java.util.HashMap;
 
 
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,40 +37,42 @@ import org.slf4j.LoggerFactory;
 @RequestMapping("/patients")
 public class PatientController {
 
-    private final PatientService patientService;
 
-    public PatientController(PatientService patientService) {
+    private final PatientService patientService;
+    private final PatientMapper patientMapper;
+
+
+    public PatientController(PatientService patientService, PatientMapper patientMapper) {
         this.patientService = patientService;
+        this.patientMapper = patientMapper;
     }
 
     private static final Logger logger = LoggerFactory.getLogger(PatientController.class);
 
     // to get all active clients
     @GetMapping("/active")
-    public ResponseEntity<Page<Patient>> getAllActivePatients(Pageable pageable) {
+    public ResponseEntity<Page<PatientResponse>> getAllActivePatients(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<Patient> patients = patientService.getActivePatients(pageable);
-        if (patients.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(patients);
-        }
-        return ResponseEntity.ok(patients);
+        Page<PatientResponse> response = patients.map(patientMapper::toResponse);
+        return ResponseEntity.ok(response);
     }
 
 
     // to get all clients (active and passive)
     @GetMapping("/all")
-    public ResponseEntity<List<Patient>> getAllPatients() {
+    public ResponseEntity<List<PatientResponse>> getAllPatients() {
         List<Patient> patients = patientService.getAllPatients();
-        if (patients.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(patients);
-        }
-        return ResponseEntity.ok(patients);
+        List<PatientResponse> response = patients.stream()
+                .map(patientMapper::toResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
 
     // ping endpoint to check if the system works
     @GetMapping("/ping")
     public ResponseEntity<String> ping() {
-        logger.info("Ping endpoint çağrıldı");
         return ResponseEntity.ok("Hasta servisi çalışıyor.");
     }
 
@@ -74,33 +81,40 @@ public class PatientController {
     public ResponseEntity<?> getPatientById(@PathVariable Long id) {
         try {
             Patient patient = patientService.findById(id);
-            return ResponseEntity.ok(patient);
+            PatientResponse response = patientMapper.toResponse(patient);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Hasta bulunamadı: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Hasta bulunamadı: " + e.getMessage());
         }
     }
 
 
     // to create new client
     @PostMapping
-    public ResponseEntity<?> createPatient(@Valid @RequestBody Patient patient) {
+    public ResponseEntity<?> createPatient(@Valid @RequestBody PatientRequest patientRequest) {
         try {
+            Patient patient = patientMapper.toEntity(patientRequest);
             Patient created = patientService.addPatient(patient);
-            return ResponseEntity.ok(created);
+            return ResponseEntity.ok(patientMapper.toResponse(created));
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Hasta oluşturulamadı: " + ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Hasta oluşturulamadı: " + ex.getMessage());
         } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Bir hata oluştu.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Bir hata oluştu.");
         }
     }
 
 
     // to update an existing client information
     @PutMapping("/{id}")
-    public ResponseEntity<?> updatePatient(@PathVariable Long id, @Valid @RequestBody Patient updated) {
+    public ResponseEntity<?> updatePatient(@PathVariable Long id, @Valid @RequestBody PatientRequest patientRequest) {
         try {
-            Patient updatedPatient = patientService.updatePatient(id, updated);
-            return ResponseEntity.ok(updatedPatient);
+            Patient existing = patientService.findById(id);
+            patientMapper.updateEntity(patientRequest, existing);
+            Patient updated = patientService.updatePatient(id, existing);
+            return ResponseEntity.ok(patientMapper.toResponse(updated));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
         } catch (Exception ex) {
@@ -120,7 +134,7 @@ public class PatientController {
             String ipAddress = request.getRemoteAddr();
             patientService.softDeletePatient(id, reason, deletedBy, ipAddress);
             return ResponseEntity.ok("Danışan başarıyla silindi ve arşive taşındı.");
-        } catch (RuntimeException e) { // <-- Burada doğrudan RuntimeException yakala
+        } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -134,7 +148,6 @@ public class PatientController {
     // to get clients according filter criteria
     @PostMapping("/filter")
     public ResponseEntity<?> filterPatients(@Valid @RequestBody PatientFilterRequest filterRequest) {
-
         boolean hasValidField =
                 (filterRequest.getFirstName() != null && !filterRequest.getFirstName().isBlank()) ||
                         (filterRequest.getLastName() != null && !filterRequest.getLastName().isBlank()) ||
@@ -142,15 +155,19 @@ public class PatientController {
                         (filterRequest.getBirthYear() != null) ||
                         (filterRequest.getCreatedAfter() != null) ||
                         (filterRequest.getUpdatedBefore() != null) ||
-                        (filterRequest.getEmail() != null && !filterRequest.getEmail().isBlank()) ||   // ✅ email kontrolü
-                        (filterRequest.getPhone() != null && !filterRequest.getPhone().isBlank());     // ✅ phone kontrolü
+                        (filterRequest.getEmail() != null && !filterRequest.getEmail().isBlank()) ||
+                        (filterRequest.getPhone() != null && !filterRequest.getPhone().isBlank());
 
         if (!hasValidField) {
             return ResponseEntity.badRequest().body("En az bir geçerli filtre alanı girilmelidir.");
         }
 
         List<Patient> filtered = patientService.filterPatients(filterRequest);
-        return ResponseEntity.ok(filtered);
+        List<PatientResponse> response = filtered.stream()
+                .map(patientMapper::toResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
     }
 
 
@@ -161,6 +178,7 @@ public class PatientController {
         String message = "Geçersiz alan: " + fieldName;
         return ResponseEntity.badRequest().body(message);
     }
+
 
     // to get active clients paged order
     @GetMapping("/paged")
@@ -180,5 +198,4 @@ public class PatientController {
         });
         return ResponseEntity.badRequest().body(errors);
     }
-
 }

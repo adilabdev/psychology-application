@@ -15,7 +15,6 @@ import java.time.Period;
 @Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "patient_base")
 @Data
-@Where(clause = "deleted = false")  // Soft delete tüm hiyerarşiye uygulanır
 public abstract class PatientBase extends BaseEntity {
 
     @Id
@@ -60,6 +59,11 @@ public abstract class PatientBase extends BaseEntity {
     @Column(nullable = false)
     private String email;
 
+    // ip address
+    @Column(name = "ip_address")
+    private String ipAddress;
+
+
     // for getting automatic age calculation and not saved (transient)
     @Transient
     public int getAge() {
@@ -68,71 +72,4 @@ public abstract class PatientBase extends BaseEntity {
     }
 
     // Getters and Setters
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getMiddleName() {
-        return middleName;
-    }
-
-    public void setMiddleName(String middleName) {
-        this.middleName = middleName;
-    }
-
-    public LocalDate getBirthDate() {
-        return birthDate;
-    }
-
-    public void setBirthDate(LocalDate birthDate) {
-        this.birthDate = birthDate;
-    }
-
-    public Gender getGender() {
-        return gender;
-    }
-
-    public void setGender(Gender gender) {
-        this.gender = gender;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-
-
 }

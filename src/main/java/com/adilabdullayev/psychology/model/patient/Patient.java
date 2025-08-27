@@ -2,7 +2,8 @@ package com.adilabdullayev.psychology.model.patient;
 
 import com.adilabdullayev.psychology.model.BaseEntity;
 import com.adilabdullayev.psychology.model.notes.UserCounselorNote;
-import com.adilabdullayev.psychology.model.patient.PatientStatus;
+import com.adilabdullayev.psychology.model.enums.PatientStatus;
+import com.adilabdullayev.psychology.model.counselor.Counselor;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -15,13 +16,12 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-// @Where(clause = "deleted = false") // Soft delete ile silinen kayıtları filtrele
 @Table(name = "patients")
 public class Patient extends PatientBase {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @ManyToOne
+    @JoinColumn(name = "counselor_id")
+    private Counselor counselor;
 
     // counselor and client notes for that specific client
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -42,4 +42,11 @@ public class Patient extends PatientBase {
 
     // last session date
     private LocalDateTime lastSessionDate;
+
+
+    @PrePersist
+    protected void onCreate() {
+        this.deleted = false;
+    }
+
 }
