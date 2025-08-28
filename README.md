@@ -43,16 +43,18 @@ Controller Layer (future plans)
 
 - Follows SOLID principles
 - Separates concerns clearly across layers
-- Prepared for REST/GraphQL API layer
+- Modular and maintainable  
+- Ready for RESTful API expansion 
 
 ---
 
 ## 💡 Key Features
 
-- `addPatient()` → Checks for duplicates, restores archived or soft-deleted patients
-- `softDeletePatient()` → Archives the patient and associated notes, then deletes the original record
-- `updatePatient()` → Updates fields, avoids phone/email collisions, attaches new notes
-- `generateUniquePatientCode()` → Generates sequential patient code with retry mechanism
+- Add, update, archive (soft delete) patients and counselors 
+- Add, filter, archive counselors  
+- Store notes linked to patients and counselors  
+- Enum-based modeling for roles, gender, status  
+- Pagination and search support
 
 ---
 
@@ -64,6 +66,77 @@ Custom global exception handler via `@ControllerAdvice`:
 - `MethodArgumentNotValidException` → For validation failures on `@Valid` annotated request bodies
 
 ---
+
+## REST API Endpoints
+
+## 🧍 Patient API Endpoints (`/patients`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET`  | `/patients/active` | Retrieve active patients (paginated) |
+| `GET`  | `/patients/all` | Retrieve all patients (active + archived) |
+| `GET`  | `/patients/ping` | Health check for patient service |
+| `GET`  | `/patients/{id}` | Get patient by ID |
+| `POST` | `/patients` | Create a new patient |
+| `PUT`  | `/patients/{id}` | Update patient details |
+| `DELETE` | `/patients/{id}` | Soft-delete (archive) a patient |
+| `POST` | `/patients/filter` | Filter patients by criteria |
+| `GET`  | `/patients/paged` | Get paginated list of active patients |
+
+---
+
+## 🧑‍⚕️ Counselor API Endpoints (`/counselors`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET`  | `/counselors` | Retrieve all counselors |
+| `GET`  | `/counselors/all` | Retrieve all visible counselors |
+| `GET`  | `/counselors/active` | Retrieve active counselors |
+| `GET`  | `/counselors/paged` | Get paginated list of active counselors |
+| `GET`  | `/counselors/search?query=abc` | Search counselors by keyword |
+| `GET`  | `/counselors/{id}/sessions` | Get session data for a specific counselor |
+| `GET`  | `/counselors/stats` | Get counselor statistics |
+| `POST` | `/counselors` | Create a new counselor |
+| `PUT`  | `/counselors/{id}` | Update counselor details |
+| `DELETE` | `/counselors/{id}` | Soft-delete (archive) a counselor |
+| `POST` | `/counselors/filter` | Filter counselors by criteria |
+
+
+---
+
+### 🔹 Active Notes (`/patients/{patientId}/notes`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/patients/{patientId}/notes` | Create a new note for a specific patient |
+| `GET`  | `/patients/{patientId}/notes` | Retrieve all notes for a specific patient |
+| `GET`  | `/patients/{patientId}/notes/type/{noteOwnerType}` | Filter notes by owner type (e.g., COUNSELOR, SYSTEM) |
+| `GET`  | `/patients/{patientId}/notes/search` | Search notes by keyword (optionally filter by owner type) |
+| `GET`  | `/patients/{patientId}/notes/filter/type` | Filter notes by note type (e.g., INFORMATION, WARNING) |
+| `GET`  | `/patients/{patientId}/notes/visible` | Get notes marked as visible to the patient |
+| `GET`  | `/patients/{patientId}/notes/deleted` | Get soft-deleted notes |
+| `GET`  | `/patients/{patientId}/notes/created-after` | Get notes created after a specific date |
+| `GET`  | `/patients/{patientId}/notes/filter` | Filter notes by type and visibility |
+
+---
+
+### 🔹 Archived Notes (`/patients/{patientId}/archived-notes`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/patients/{patientId}/archived-notes` | Create an archived note for a specific patient |
+| `GET`  | `/patients/{patientId}/archived-notes` | Retrieve archived notes with pagination |
+| `GET`  | `/patients/{patientId}/archived-notes/filter/type` | Filter archived notes by note type |
+| `GET`  | `/patients/{patientId}/archived-notes/visible` | Get archived notes visible to the patient |
+| `GET`  | `/patients/{patientId}/archived-notes/deleted` | Get soft-deleted archived notes |
+| `GET`  | `/patients/{patientId}/archived-notes/created-after` | Get archived notes created after a specific date |
+| `GET`  | `/patients/{patientId}/archived-notes/filter` | Filter archived notes by type and visibility |
+
+---
+
+> These endpoints support full lifecycle management of notes, including creation, filtering, visibility control, and soft deletion — for both active and archived patient records.
+
+
 
 ## 📁 Example JSON (Request Payload)
 
